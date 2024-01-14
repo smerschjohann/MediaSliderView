@@ -25,19 +25,16 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MediaSliderActivity extends AppCompatActivity {
     private ViewPager mPager;
@@ -46,8 +43,7 @@ public class MediaSliderActivity extends AppCompatActivity {
     private int currentWindow = 0;
     private boolean isTitleVisible, isMediaCountVisible, isNavigationVisible;
     private String title;
-    private ArrayList<String> urlList;
-    private String mediaType;
+    private ArrayList<SliderItem> urlList;
     private String titleTextColor;
     private String titleBackgroundColor;
     private int startPosition = 0;
@@ -59,9 +55,8 @@ public class MediaSliderActivity extends AppCompatActivity {
         setContentView(R.layout.slider);
     }
 
-    public void loadMediaSliderView(ArrayList<String> mediaUrlList, String mediaType, boolean isTitleVisible, boolean isMediaCountVisible, boolean isNavigationVisible, String title, String titleBackgroundColor, String titleTextColor, int startPosition) {
+    public void loadMediaSliderView(ArrayList<SliderItem> mediaUrlList, boolean isTitleVisible, boolean isMediaCountVisible, boolean isNavigationVisible, String title, String titleBackgroundColor, String titleTextColor, int startPosition) {
         this.urlList = mediaUrlList;
-        this.mediaType = mediaType;
         this.isTitleVisible = isTitleVisible;
         this.isMediaCountVisible = isMediaCountVisible;
         this.isNavigationVisible = isNavigationVisible;
@@ -92,7 +87,7 @@ public class MediaSliderActivity extends AppCompatActivity {
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
-        PagerAdapter pagerAdapter = new ScreenSlidePagerAdapter(MediaSliderActivity.this, urlList, mediaType);
+        PagerAdapter pagerAdapter = new ScreenSlidePagerAdapter(MediaSliderActivity.this, urlList);
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -145,39 +140,44 @@ public class MediaSliderActivity extends AppCompatActivity {
         mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int i, float v, int i1) {
-                if (mediaType.equalsIgnoreCase("video")) {
+                SliderItem sliderItem = urlList.get(i);
+                slider_title.setText(sliderItem.getDescription());
+                slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + urlList.size());
+                if (sliderItem.getType().equalsIgnoreCase("video")) {
                     View viewTag = mPager.findViewWithTag("view" + i);
                     PlayerView simpleExoPlayerView = viewTag.findViewById(R.id.video_view);
                     if (simpleExoPlayerView.getPlayer() != null) {
-                        SimpleExoPlayer player = (SimpleExoPlayer) simpleExoPlayerView.getPlayer();
+                        ExoPlayer player = (ExoPlayer) simpleExoPlayerView.getPlayer();
                         playbackPosition = player.getCurrentPosition();
                         currentWindow = player.getCurrentWindowIndex();
-                        player.setPlayWhenReady(false);
+                        player.setPlayWhenReady(true);
                     }
                 }
             }
 
             @Override
             public void onPageSelected(int i) {
-                slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + urlList.size());
-                if (mediaType.equalsIgnoreCase("video")) {
+                SliderItem sliderItem = urlList.get(i);
+                if (sliderItem.getType().equalsIgnoreCase("video")) {
                     View viewTag = mPager.findViewWithTag("view" + i);
                     PlayerView simpleExoPlayerView = viewTag.findViewById(R.id.video_view);
                     if (simpleExoPlayerView.getPlayer() != null) {
-                        SimpleExoPlayer player = (SimpleExoPlayer) simpleExoPlayerView.getPlayer();
-                        Uri mediaUri = Uri.parse(urlList.get(i));
-                        MediaSource mediaSource = new ExtractorMediaSource.Factory(
-                                new DefaultHttpDataSourceFactory("media-slider-view")).
-                                createMediaSource(mediaUri);
+                        ExoPlayer player = (ExoPlayer) simpleExoPlayerView.getPlayer();
+                        Uri mediaUri = Uri.parse(sliderItem.getUrl());
+
+                        MediaItem mediaItem =
+                                MediaItem.fromUri(mediaUri);
+                        DefaultHttpDataSource.Factory defaultHttpDataSourceFactory = new DefaultHttpDataSource.Factory();
+                        MediaSource mediaSource =
+                                new ProgressiveMediaSource.Factory(defaultHttpDataSourceFactory).createMediaSource(mediaItem);
                         playbackPosition = player.getCurrentPosition();
                         currentWindow = player.getCurrentWindowIndex();
-                        player.prepare(mediaSource, true, true);
-                        player.setPlayWhenReady(false);
+                        player.setMediaSource(mediaSource);
+                        player.prepare();
+                        player.setPlayWhenReady(true);
                         player.seekTo(0, 0);
 
                     }
-
-
                 }
             }
 
@@ -205,26 +205,25 @@ public class MediaSliderActivity extends AppCompatActivity {
 
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
         private Context context;
-        private ArrayList<String> urlList;
-        private String token;
-        SimpleExoPlayer player;
+        private ArrayList<SliderItem> urlList;
+        ExoPlayer player;
         PlayerView simpleExoPlayerView;
         MediaSource mediaSource;
         TouchImageView imageView;
-        List<ProgressBar> progressBars;
+        Map<Integer, ProgressBar> progressBars;
 
 
-        private ScreenSlidePagerAdapter(Context context, ArrayList<String> urlList, String token) {
+        private ScreenSlidePagerAdapter(Context context, ArrayList<SliderItem> urlList) {
             this.context = context;
             this.urlList = urlList;
-            this.token = token;
-            progressBars = new LinkedList<>();
+            progressBars = new HashMap<>();
 
         }
 
         private void hideProgressBar(int position){
-            if (position < progressBars.size()){
+            if (progressBars.containsKey(position)){
                 progressBars.get(position).setVisibility(View.GONE);
+                progressBars.remove(position);
             }
         }
 
@@ -233,12 +232,13 @@ public class MediaSliderActivity extends AppCompatActivity {
         public Object instantiateItem(@NonNull ViewGroup container, final int position) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
             View view = null;
-            if (token.equalsIgnoreCase("image")) {
+            SliderItem model = urlList.get(position);
+            if (model.getType().equalsIgnoreCase("image")) {
                 view = inflater.inflate(R.layout.image_item, container, false);
                 imageView = view.findViewById(R.id.mBigImage);
                 ProgressBar progressBar = view.findViewById(R.id.mProgressBar);
-                progressBars.add(position, progressBar);
-                Glide.with(context).load(urlList.get(position)).centerInside().placeholder(context.getResources().getDrawable(R.drawable.images)).listener(new RequestListener<Drawable>() {
+                progressBars.put(position, progressBar);
+                Glide.with(context).load(model.getUrl()).centerInside().placeholder(context.getResources().getDrawable(R.drawable.images)).listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                         hideProgressBar(position);
@@ -252,20 +252,20 @@ public class MediaSliderActivity extends AppCompatActivity {
                         return false;
                     }
                 }).into(imageView);
-            } else if (token.equalsIgnoreCase("video")) {
+            } else if (model.getType().equalsIgnoreCase("video")) {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 simpleExoPlayerView = view.findViewById(R.id.video_view);
                 simpleExoPlayerView.setTag("view" + position);
-                player = ExoPlayerFactory.newSimpleInstance(
-                        new DefaultRenderersFactory(context),
-                        new DefaultTrackSelector(), new DefaultLoadControl());
-                Uri mediaUri = Uri.parse(urlList.get(position));
-                mediaSource = new ExtractorMediaSource.Factory(
-                        new DefaultHttpDataSourceFactory("media-slider-view")).
-                        createMediaSource(mediaUri);
+                player = new ExoPlayer.Builder(context).build();
+                Uri mediaUri = Uri.parse(model.getUrl());
+                        MediaItem mediaItem =
+                        MediaItem.fromUri(mediaUri);
+                DefaultHttpDataSource.Factory defaultHttpDataSourceFactory = new DefaultHttpDataSource.Factory();
+                mediaSource =
+                        new ProgressiveMediaSource.Factory(defaultHttpDataSourceFactory).createMediaSource(mediaItem);
                 simpleExoPlayerView.setPlayer(player);
                 player.prepare(mediaSource, true, true);
-                player.setPlayWhenReady(false);
+                player.setPlayWhenReady(true);
                 player.seekTo(0, 0);
             }
             container.addView(view);
