@@ -49,7 +49,6 @@ public class MediaSliderView extends ConstraintLayout {
     private ExoPlayer currentPlayerInScope;
     private DefaultHttpDataSource.Factory defaultExoFactory = new DefaultHttpDataSource.Factory();
     private boolean slideShowPlaying;
-    private int slideShowDelay = 3000;
     private Runnable goToNextAssetRunnable = this::goToNextAsset;
     private MediaSliderConfiguration config;
     private List<SliderItem> items;
@@ -150,7 +149,7 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     private void startTimerNextAsset() {
-        mainHandler.postDelayed(goToNextAssetRunnable, slideShowDelay);
+        mainHandler.postDelayed(goToNextAssetRunnable, this.config.getInterval() * 1000);
     }
 
     private void goToNextAsset() {

@@ -5,8 +5,6 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
-
 public class MediaSliderConfiguration implements Parcelable {
     private final boolean isTitleVisible;
     private final boolean isMediaCountVisible;
@@ -15,6 +13,7 @@ public class MediaSliderConfiguration implements Parcelable {
     private final String titleBackgroundColor;
     private final String titleTextColor;
     private final int startPosition;
+    private final int interval;
 
     public MediaSliderConfiguration(boolean isTitleVisible,
                                     boolean isMediaCountVisible,
@@ -22,7 +21,8 @@ public class MediaSliderConfiguration implements Parcelable {
                                     String title,
                                     String titleBackgroundColor,
                                     String titleTextColor,
-                                    int startPosition) {
+                                    int startPosition,
+                                    int interval) {
         this.isTitleVisible = isTitleVisible;
         this.isMediaCountVisible = isMediaCountVisible;
         this.isNavigationVisible = isNavigationVisible;
@@ -30,6 +30,7 @@ public class MediaSliderConfiguration implements Parcelable {
         this.titleBackgroundColor = titleBackgroundColor;
         this.titleTextColor = titleTextColor;
         this.startPosition = startPosition;
+        this.interval = interval;
     }
 
     protected MediaSliderConfiguration(Parcel in) {
@@ -40,6 +41,7 @@ public class MediaSliderConfiguration implements Parcelable {
         titleBackgroundColor = in.readString();
         titleTextColor = in.readString();
         startPosition = in.readInt();
+        interval = in.readInt();
     }
 
     public static final Creator<MediaSliderConfiguration> CREATOR = new Creator<MediaSliderConfiguration>() {
@@ -82,6 +84,10 @@ public class MediaSliderConfiguration implements Parcelable {
         return startPosition;
     }
 
+    public int getInterval() {
+        return interval;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -96,5 +102,6 @@ public class MediaSliderConfiguration implements Parcelable {
         dest.writeString(titleBackgroundColor);
         dest.writeString(titleTextColor);
         dest.writeInt(startPosition);
+        dest.writeInt(interval);
     }
 }
