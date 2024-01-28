@@ -141,7 +141,9 @@ public class MediaSliderView extends ConstraintLayout {
     public void toggleSlideshow(boolean togglePlayButton) {
         slideShowPlaying = !slideShowPlaying;
         if (slideShowPlaying) {
-            startTimerNextAsset();
+            if(this.items.get(this.mPager.getCurrentItem()).getType().equals("image")){
+                startTimerNextAsset();
+            }
         } else {
             mainHandler.removeCallbacks(goToNextAssetRunnable);
         }
@@ -177,7 +179,7 @@ public class MediaSliderView extends ConstraintLayout {
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
-        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, listener, defaultExoFactory);
+        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, defaultExoFactory);
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -300,13 +302,12 @@ public class MediaSliderView extends ConstraintLayout {
         }
         this.items = items;
         pagerAdapter.setItems(items);
-        if(slideShowPlaying){
+        if(slideShowPlaying && this.items.get(mPager.getCurrentItem()).getType().equals("image")){
             startTimerNextAsset();
         }
     }
 
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
-        private final Player.Listener listener;
         private final DefaultHttpDataSource.Factory exoFactory;
         private Context context;
         private List<SliderItem> items;
@@ -315,12 +316,10 @@ public class MediaSliderView extends ConstraintLayout {
 
         private ScreenSlidePagerAdapter(Context context,
                                         List<SliderItem> items,
-                                        Player.Listener listener,
                                         DefaultHttpDataSource.Factory defaultExoFactory) {
             this.context = context;
             this.items = items;
             this.progressBars = new HashMap<>();
-            this.listener = listener;
             this.exoFactory = defaultExoFactory;
         }
 
@@ -334,6 +333,10 @@ public class MediaSliderView extends ConstraintLayout {
                 progressBars.get(position).setVisibility(View.GONE);
                 progressBars.remove(position);
             }
+        }
+
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
         }
 
         @NonNull

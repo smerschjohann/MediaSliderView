@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Objects;
+
 public class SliderItem implements Parcelable {
     private final String url;
     private final String type;
@@ -56,5 +58,18 @@ public class SliderItem implements Parcelable {
         dest.writeString(url);
         dest.writeString(type);
         dest.writeString(description);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SliderItem that = (SliderItem) o;
+        return Objects.equals(url, that.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(url);
     }
 }
