@@ -31,6 +31,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
@@ -110,6 +111,13 @@ public class MediaSliderView extends ConstraintLayout {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 if (playbackState == Player.STATE_ENDED && slideShowPlaying) {
+                    goToNextAsset();
+                }
+            }
+
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                if(slideShowPlaying){
                     goToNextAsset();
                 }
             }
@@ -238,6 +246,7 @@ public class MediaSliderView extends ConstraintLayout {
                         if (currentPlayerInScope.getPlaybackState() == STATE_IDLE) {
                             prepareMedia(sliderItem.getUrl(), currentPlayerInScope, defaultExoFactory);
                         }
+                        currentPlayerInScope.addListener(listener);
                         currentPlayerInScope.setPlayWhenReady(true);
                     }
                 }
@@ -359,7 +368,6 @@ public class MediaSliderView extends ConstraintLayout {
                 ExoPlayer player = new ExoPlayer.Builder(context).build();
                 prepareMedia(model.getUrl(), player, exoFactory);
                 player.setPlayWhenReady(false);
-                player.addListener(listener);
                 playerView.setPlayer(player);
             }
             container.addView(view);
