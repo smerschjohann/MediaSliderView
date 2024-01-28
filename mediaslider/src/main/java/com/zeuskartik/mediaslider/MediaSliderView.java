@@ -32,10 +32,11 @@ import com.bumptech.glide.request.target.Target;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,7 @@ public class MediaSliderView extends ConstraintLayout {
     private Runnable goToNextAssetRunnable = this::goToNextAsset;
     private MediaSliderConfiguration config;
     private List<SliderItem> items;
+    private ScreenSlidePagerAdapter pagerAdapter;
 
     public MediaSliderView(@NonNull Context context) {
         super(context);
@@ -167,7 +169,7 @@ public class MediaSliderView extends ConstraintLayout {
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
-        PagerAdapter pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, listener, defaultExoFactory);
+        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, listener, defaultExoFactory);
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -260,7 +262,7 @@ public class MediaSliderView extends ConstraintLayout {
 
     public void onDestroy() {
         stopPlayer();
-        if(mainHandler != null){
+        if (mainHandler != null) {
             mainHandler.removeCallbacks(goToNextAssetRunnable);
         }
     }
@@ -282,23 +284,40 @@ public class MediaSliderView extends ConstraintLayout {
         player.prepare(mediaSource, true, true);
     }
 
+    public void setItems(@NotNull List<SliderItem> items) {
+        if(slideShowPlaying){
+            // to prevent timing issues when adding + sliding at the same time
+            mainHandler.removeCallbacks(goToNextAssetRunnable);
+        }
+        this.items = items;
+        pagerAdapter.setItems(items);
+        if(slideShowPlaying){
+            startTimerNextAsset();
+        }
+    }
+
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
         private final Player.Listener listener;
         private final DefaultHttpDataSource.Factory exoFactory;
         private Context context;
-        private List<SliderItem> urlList;
+        private List<SliderItem> items;
         private TouchImageView imageView;
         private Map<Integer, ProgressBar> progressBars;
 
         private ScreenSlidePagerAdapter(Context context,
-                                        List<SliderItem> urlList,
+                                        List<SliderItem> items,
                                         Player.Listener listener,
                                         DefaultHttpDataSource.Factory defaultExoFactory) {
             this.context = context;
-            this.urlList = urlList;
+            this.items = items;
             this.progressBars = new HashMap<>();
             this.listener = listener;
             this.exoFactory = defaultExoFactory;
+        }
+
+        public void setItems(List<SliderItem> items) {
+            this.items = items;
+            notifyDataSetChanged();
         }
 
         private void hideProgressBar(int position) {
@@ -313,7 +332,7 @@ public class MediaSliderView extends ConstraintLayout {
         public Object instantiateItem(@NonNull ViewGroup container, final int position) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
             View view = null;
-            SliderItem model = urlList.get(position);
+            SliderItem model = items.get(position);
             if (model.getType().equalsIgnoreCase("image")) {
                 view = inflater.inflate(R.layout.image_item, container, false);
                 imageView = view.findViewById(R.id.mBigImage);
@@ -349,7 +368,7 @@ public class MediaSliderView extends ConstraintLayout {
 
         @Override
         public int getCount() {
-            return urlList.size();
+            return items.size();
         }
 
         @Override
