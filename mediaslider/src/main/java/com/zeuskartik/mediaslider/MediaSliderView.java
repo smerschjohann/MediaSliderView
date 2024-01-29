@@ -154,7 +154,7 @@ public class MediaSliderView extends ConstraintLayout {
 
     private void togglePlayButton() {
         playButton.setVisibility(View.VISIBLE);
-        playButton.setBackgroundResource(slideShowPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+        playButton.setBackgroundResource(slideShowPlaying ? android.R.drawable.ic_media_play : android.R.drawable.ic_media_pause);
         mainHandler.postDelayed((Runnable) () -> {
             playButton.setVisibility(View.GONE);
         }, 2000);
@@ -287,14 +287,12 @@ public class MediaSliderView extends ConstraintLayout {
     public void setDefaultExoFactory(DefaultHttpDataSource.Factory defaultExoFactory) {
         this.defaultExoFactory = defaultExoFactory;
     }
-
     private static void prepareMedia(String mediaUrl, ExoPlayer player, DefaultHttpDataSource.Factory defaultExoFactory) {
         Uri mediaUri = Uri.parse(mediaUrl);
         MediaItem mediaItem = MediaItem.fromUri(mediaUri);
         ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(defaultExoFactory).createMediaSource(mediaItem);
         player.prepare(mediaSource, true, true);
     }
-
     public void setItems(@NotNull List<SliderItem> items) {
         if(slideShowPlaying){
             // to prevent timing issues when adding + sliding at the same time
@@ -306,7 +304,6 @@ public class MediaSliderView extends ConstraintLayout {
             startTimerNextAsset();
         }
     }
-
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
         private final DefaultHttpDataSource.Factory exoFactory;
         private Context context;
