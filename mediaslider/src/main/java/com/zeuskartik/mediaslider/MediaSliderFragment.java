@@ -8,8 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
 
 import java.util.List;
 
@@ -27,12 +26,16 @@ public class MediaSliderFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() {
+    public void onPause() {
+        destroyMediaPlayer();
+        super.onPause();
+    }
+
+    private void destroyMediaPlayer() {
         MediaSliderView view = getView();
         if(view != null) {
             view.onDestroy();
         }
-        super.onDestroyView();
     }
 
     @Nullable

@@ -1,7 +1,8 @@
 package com.zeuskartik.mediaslider;
 
-import static com.google.android.exoplayer2.Player.STATE_IDLE;
+import static androidx.media3.common.Player.STATE_IDLE;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -14,7 +15,9 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -23,6 +26,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
+import androidx.media3.ui.PlayerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -31,13 +39,10 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -118,8 +123,16 @@ public class MediaSliderView extends ConstraintLayout {
             }
 
             @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                ImageButton playPauseButton = findViewById(R.id.exo_pause);
+                if(playPauseButton != null){
+                    playPauseButton.setImageResource(isPlaying ? R.drawable.exo_legacy_controls_pause : R.drawable.exo_legacy_controls_play);
+                }
+            }
+
+            @Override
             public void onPlayerError(PlaybackException error) {
-                if(slideShowPlaying){
+                if (slideShowPlaying) {
                     goToNextAsset();
                 }
             }
@@ -144,12 +157,12 @@ public class MediaSliderView extends ConstraintLayout {
         slideShowPlaying = !slideShowPlaying;
         if (slideShowPlaying) {
             // do not start timers for videos, they will continue in the player listener
-            if(this.items.get(this.mPager.getCurrentItem()).getType() == SliderItemType.IMAGE){
+            if (this.items.get(this.mPager.getCurrentItem()).getType() == SliderItemType.IMAGE) {
                 startTimerNextAsset();
             }
-            if(getContext() instanceof Activity){
+            if (getContext() instanceof Activity) {
                 // view is being triggered from main app, prevent app going to sleep
-                ((Activity)getContext()).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                ((Activity) getContext()).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         } else {
             clearKeepScreenOnFlags();
@@ -280,7 +293,9 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     public void onDestroy() {
-        stopPlayer();
+        if(currentPlayerInScope != null){
+            currentPlayerInScope.release();
+        }
         clearKeepScreenOnFlags();
         if (mainHandler != null) {
             mainHandler.removeCallbacks(goToNextAssetRunnable);
@@ -288,9 +303,12 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     private void clearKeepScreenOnFlags() {
-        if(getContext() instanceof Activity){
+        if (getContext() instanceof Activity) {
             // view is being triggered from main app, remove the flags to keep screen on
-            ((Activity)getContext()).getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            Window window = ((Activity) getContext()).getWindow();
+            if (window != null) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
         }
     }
 
@@ -303,23 +321,28 @@ public class MediaSliderView extends ConstraintLayout {
     public void setDefaultExoFactory(DefaultHttpDataSource.Factory defaultExoFactory) {
         this.defaultExoFactory = defaultExoFactory;
     }
-    private static void prepareMedia(String mediaUrl, ExoPlayer player, DefaultHttpDataSource.Factory defaultExoFactory) {
+
+    @SuppressLint("UnsafeOptInUsageError")
+    private static void prepareMedia(String mediaUrl, ExoPlayer player, DefaultHttpDataSource.Factory factory) {
         Uri mediaUri = Uri.parse(mediaUrl);
         MediaItem mediaItem = MediaItem.fromUri(mediaUri);
-        ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(defaultExoFactory).createMediaSource(mediaItem);
-        player.prepare(mediaSource, true, true);
+        ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(factory).createMediaSource(mediaItem);
+        player.setMediaSource(mediaSource, 0L);
+        player.prepare();
     }
+
     public void setItems(@NotNull List<SliderItem> items) {
-        if(slideShowPlaying){
+        if (slideShowPlaying) {
             // to prevent timing issues when adding + sliding at the same time
             mainHandler.removeCallbacks(goToNextAssetRunnable);
         }
         this.items = items;
         pagerAdapter.setItems(items);
-        if(slideShowPlaying && this.items.get(mPager.getCurrentItem()).getType() == SliderItemType.IMAGE){
+        if (slideShowPlaying && this.items.get(mPager.getCurrentItem()).getType() == SliderItemType.IMAGE) {
             startTimerNextAsset();
         }
     }
+
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
         private final DefaultHttpDataSource.Factory exoFactory;
         private Context context;
@@ -385,6 +408,18 @@ public class MediaSliderView extends ConstraintLayout {
                 prepareMedia(model.getUrl(), player, exoFactory);
                 player.setPlayWhenReady(false);
                 playerView.setPlayer(player);
+                ImageButton playBtn = playerView.findViewById(R.id.exo_pause);
+                playBtn.setOnClickListener(v -> {
+                    //events on play buttons
+                    if (player.isPlaying()) {
+                        player.pause();
+                    } else {
+                        if(player.getCurrentPosition() >= player.getContentDuration()){
+                            player.seekToDefaultPosition();
+                        }
+                        player.play();
+                    }
+                });
             }
             container.addView(view);
             return view;
