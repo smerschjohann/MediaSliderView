@@ -2,6 +2,7 @@ package com.zeuskartik.mediaslider;
 
 import static com.google.android.exoplayer2.Player.STATE_IDLE;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -13,6 +14,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -79,7 +81,7 @@ public class MediaSliderView extends ConstraintLayout {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if ((event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) && items.get(mPager.getCurrentItem()).getType().equals("image")) {
+            if ((event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) && items.get(mPager.getCurrentItem()).getType() == SliderItemType.IMAGE) {
                 toggleSlideshow(true);
                 return false;
             } else if (slideShowPlaying) {
@@ -141,10 +143,16 @@ public class MediaSliderView extends ConstraintLayout {
     public void toggleSlideshow(boolean togglePlayButton) {
         slideShowPlaying = !slideShowPlaying;
         if (slideShowPlaying) {
-            if(this.items.get(this.mPager.getCurrentItem()).getType().equals("image")){
+            // do not start timers for videos, they will continue in the player listener
+            if(this.items.get(this.mPager.getCurrentItem()).getType() == SliderItemType.IMAGE){
                 startTimerNextAsset();
             }
+            if(getContext() instanceof Activity){
+                // view is being triggered from main app, prevent app going to sleep
+                ((Activity)getContext()).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
         } else {
+            clearKeepScreenOnFlags();
             mainHandler.removeCallbacks(goToNextAssetRunnable);
         }
         if (togglePlayButton) {
@@ -236,7 +244,7 @@ public class MediaSliderView extends ConstraintLayout {
                 SliderItem sliderItem = items.get(i);
                 slider_title.setText(sliderItem.getDescription());
                 slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + items.size());
-                if (sliderItem.getType().equalsIgnoreCase("video")) {
+                if (sliderItem.getType() == SliderItemType.VIDEO) {
                     View viewTag = mPager.findViewWithTag("view" + i);
                     if (viewTag == null) {
                         return;
@@ -257,7 +265,7 @@ public class MediaSliderView extends ConstraintLayout {
             @Override
             public void onPageSelected(int i) {
                 SliderItem sliderItem = items.get(i);
-                if (sliderItem.getType().equalsIgnoreCase("image")) {
+                if (sliderItem.getType() == SliderItemType.IMAGE) {
                     if (slideShowPlaying) {
                         startTimerNextAsset();
                     }
@@ -273,8 +281,16 @@ public class MediaSliderView extends ConstraintLayout {
 
     public void onDestroy() {
         stopPlayer();
+        clearKeepScreenOnFlags();
         if (mainHandler != null) {
             mainHandler.removeCallbacks(goToNextAssetRunnable);
+        }
+    }
+
+    private void clearKeepScreenOnFlags() {
+        if(getContext() instanceof Activity){
+            // view is being triggered from main app, remove the flags to keep screen on
+            ((Activity)getContext()).getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
@@ -300,7 +316,7 @@ public class MediaSliderView extends ConstraintLayout {
         }
         this.items = items;
         pagerAdapter.setItems(items);
-        if(slideShowPlaying && this.items.get(mPager.getCurrentItem()).getType().equals("image")){
+        if(slideShowPlaying && this.items.get(mPager.getCurrentItem()).getType() == SliderItemType.IMAGE){
             startTimerNextAsset();
         }
     }
@@ -342,7 +358,7 @@ public class MediaSliderView extends ConstraintLayout {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
             View view = null;
             SliderItem model = items.get(position);
-            if (model.getType().equalsIgnoreCase("image")) {
+            if (model.getType() == SliderItemType.IMAGE) {
                 view = inflater.inflate(R.layout.image_item, container, false);
                 imageView = view.findViewById(R.id.mBigImage);
                 ProgressBar progressBar = view.findViewById(R.id.mProgressBar);
@@ -361,7 +377,7 @@ public class MediaSliderView extends ConstraintLayout {
                         return false;
                     }
                 }).into(imageView);
-            } else if (model.getType().equalsIgnoreCase("video")) {
+            } else if (model.getType() == SliderItemType.VIDEO) {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);
                 playerView.setTag("view" + position);
@@ -387,7 +403,7 @@ public class MediaSliderView extends ConstraintLayout {
         @Override
         public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
             View view = (View) object;
-            PlayerView exoplayer = (PlayerView) view.findViewById(R.id.video_view);
+            PlayerView exoplayer = view.findViewById(R.id.video_view);
             if (exoplayer != null && exoplayer.getPlayer() != null) {
                 exoplayer.getPlayer().release();
             }

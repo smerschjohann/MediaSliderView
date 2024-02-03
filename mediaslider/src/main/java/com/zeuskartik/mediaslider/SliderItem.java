@@ -9,10 +9,10 @@ import java.util.Objects;
 
 public class SliderItem implements Parcelable {
     private final String url;
-    private final String type;
+    private final SliderItemType type;
     private final String description;
 
-    public SliderItem(String url, String type, String description) {
+    public SliderItem(String url, SliderItemType type, String description) {
         this.url = url;
         this.type = type;
         this.description = description;
@@ -20,7 +20,7 @@ public class SliderItem implements Parcelable {
 
     protected SliderItem(Parcel in) {
         url = in.readString();
-        type = in.readString();
+        type = SliderItemType.valueOf(in.readString());
         description = in.readString();
     }
 
@@ -40,7 +40,7 @@ public class SliderItem implements Parcelable {
         return url;
     }
 
-    public String getType() {
+    public SliderItemType getType() {
         return type;
     }
 
@@ -56,7 +56,7 @@ public class SliderItem implements Parcelable {
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(url);
-        dest.writeString(type);
+        dest.writeString(type.toString());
         dest.writeString(description);
     }
 
