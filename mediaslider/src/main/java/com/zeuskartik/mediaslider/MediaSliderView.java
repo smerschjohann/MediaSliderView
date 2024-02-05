@@ -26,9 +26,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.ui.PlayerView;
 import androidx.viewpager.widget.PagerAdapter;
@@ -39,10 +41,6 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-
-import androidx.media3.common.MediaItem;
-import androidx.media3.common.PlaybackException;
-import androidx.media3.common.Player;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -125,7 +123,7 @@ public class MediaSliderView extends ConstraintLayout {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 ImageButton playPauseButton = findViewById(R.id.exo_pause);
-                if(playPauseButton != null){
+                if (playPauseButton != null) {
                     playPauseButton.setImageResource(isPlaying ? R.drawable.exo_legacy_controls_pause : R.drawable.exo_legacy_controls_play);
                 }
             }
@@ -293,7 +291,7 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     public void onDestroy() {
-        if(currentPlayerInScope != null){
+        if (currentPlayerInScope != null) {
             currentPlayerInScope.release();
         }
         clearKeepScreenOnFlags();
@@ -386,20 +384,25 @@ public class MediaSliderView extends ConstraintLayout {
                 imageView = view.findViewById(R.id.mBigImage);
                 ProgressBar progressBar = view.findViewById(R.id.mProgressBar);
                 progressBars.put(position, progressBar);
-                Glide.with(context).load(model.getUrl()).centerInside().placeholder(context.getResources().getDrawable(R.drawable.images)).listener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                        hideProgressBar(position);
-                        imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.images));
-                        return false;
-                    }
+                Glide.with(context)
+                        .load(model.getUrl())
+                        .centerInside()
+                        .placeholder(context.getResources().getDrawable(R.drawable.images))
+                        .listener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                hideProgressBar(position);
+                                imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.images));
+                                return false;
+                            }
 
-                    @Override
-                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                        hideProgressBar(position);
-                        return false;
-                    }
-                }).into(imageView);
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                hideProgressBar(position);
+                                return false;
+                            }
+                        })
+                        .into(imageView);
             } else if (model.getType() == SliderItemType.VIDEO) {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);
@@ -414,7 +417,7 @@ public class MediaSliderView extends ConstraintLayout {
                     if (player.isPlaying()) {
                         player.pause();
                     } else {
-                        if(player.getCurrentPosition() >= player.getContentDuration()){
+                        if (player.getCurrentPosition() >= player.getContentDuration()) {
                             player.seekToDefaultPosition();
                         }
                         player.play();
