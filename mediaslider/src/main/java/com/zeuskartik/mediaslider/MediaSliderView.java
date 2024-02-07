@@ -56,7 +56,7 @@ public class MediaSliderView extends ConstraintLayout {
     private ExoPlayer currentPlayerInScope;
     private DefaultHttpDataSource.Factory defaultExoFactory = new DefaultHttpDataSource.Factory();
     private boolean slideShowPlaying;
-    private Runnable goToNextAssetRunnable = this::goToNextAsset;
+    private final Runnable goToNextAssetRunnable = this::goToNextAsset;
     private MediaSliderConfiguration config;
     private List<SliderItem> items;
     private ScreenSlidePagerAdapter pagerAdapter;
@@ -387,12 +387,13 @@ public class MediaSliderView extends ConstraintLayout {
                 Glide.with(context)
                         .load(model.getUrl())
                         .centerInside()
+                        .thumbnail(Glide.with(context)
+                                .load(model.getThumbnailUrl()))
                         .placeholder(context.getResources().getDrawable(R.drawable.images))
                         .listener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                                 hideProgressBar(position);
-                                imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.images));
                                 return false;
                             }
 

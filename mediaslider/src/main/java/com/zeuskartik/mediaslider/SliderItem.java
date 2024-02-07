@@ -11,17 +11,20 @@ public class SliderItem implements Parcelable {
     private final String url;
     private final SliderItemType type;
     private final String description;
+    private final String thumbnailUrl;
 
-    public SliderItem(String url, SliderItemType type, String description) {
+    public SliderItem(String url, SliderItemType type, String description, String thumbnailUrl) {
         this.url = url;
         this.type = type;
         this.description = description;
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     protected SliderItem(Parcel in) {
         url = in.readString();
         type = SliderItemType.valueOf(in.readString());
         description = in.readString();
+        thumbnailUrl = in.readString();
     }
 
     public static final Creator<SliderItem> CREATOR = new Creator<SliderItem>() {
@@ -46,6 +49,10 @@ public class SliderItem implements Parcelable {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
     }
 
     @Override
