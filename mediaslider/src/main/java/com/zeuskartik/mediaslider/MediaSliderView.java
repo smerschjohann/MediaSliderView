@@ -30,6 +30,7 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.ui.PlayerView;
@@ -375,6 +376,7 @@ public class MediaSliderView extends ConstraintLayout {
 
         @NonNull
         @Override
+        @SuppressLint("UnsafeOptInUsageError")
         public Object instantiateItem(@NonNull ViewGroup container, final int position) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
             View view = null;
@@ -408,7 +410,9 @@ public class MediaSliderView extends ConstraintLayout {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);
                 playerView.setTag("view" + position);
-                ExoPlayer player = new ExoPlayer.Builder(context).build();
+                ExoPlayer player = new ExoPlayer.Builder(context).setLoadControl(new DefaultLoadControl.Builder()
+                        .setPrioritizeTimeOverSizeThresholds(false)
+                        .build()).build();
                 prepareMedia(model.getUrl(), player, exoFactory);
                 player.setPlayWhenReady(false);
                 playerView.setPlayer(player);
