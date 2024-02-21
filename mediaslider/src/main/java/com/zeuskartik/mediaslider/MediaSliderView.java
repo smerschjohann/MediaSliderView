@@ -84,6 +84,9 @@ public class MediaSliderView extends ConstraintLayout {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if(mPager == null || mPager.getAdapter() == null){
+            return super.dispatchKeyEvent(event);
+        }
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if ((event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) && items.get(mPager.getCurrentItem()).getType() == SliderItemType.IMAGE) {
                 toggleSlideshow(true);
@@ -97,11 +100,11 @@ public class MediaSliderView extends ConstraintLayout {
                 }
                 // Go to next photo if dpad right is clicked or just stop
                 return super.dispatchKeyEvent(event);
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && mPager != null && mPager.getAdapter() != null && mPager.getAdapter().getCount() - 1 == mPager.getCurrentItem()) {
+            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && mPager.getAdapter().getCount() - 1 == mPager.getCurrentItem()) {
                 // last item, go to first
                 mPager.setCurrentItem(0, true);
                 return false;
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && mPager != null && mPager.getAdapter() != null && 0 == mPager.getCurrentItem()) {
+            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && 0 == mPager.getCurrentItem()) {
                 // last item, go to first
                 mPager.setCurrentItem(mPager.getAdapter().getCount() - 1, true);
                 return false;
