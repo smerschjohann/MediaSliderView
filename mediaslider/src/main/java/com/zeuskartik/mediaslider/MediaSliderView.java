@@ -38,6 +38,7 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
@@ -84,7 +85,7 @@ public class MediaSliderView extends ConstraintLayout {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if(mPager == null || mPager.getAdapter() == null){
+        if (mPager == null || mPager.getAdapter() == null) {
             return super.dispatchKeyEvent(event);
         }
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -202,7 +203,7 @@ public class MediaSliderView extends ConstraintLayout {
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
-        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, defaultExoFactory);
+        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, defaultExoFactory, config.isOnlyUseThumbnails());
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -347,6 +348,7 @@ public class MediaSliderView extends ConstraintLayout {
 
     private static class ScreenSlidePagerAdapter extends PagerAdapter {
         private final DefaultHttpDataSource.Factory exoFactory;
+        private final boolean onlyUseThumbnails;
         private Context context;
         private List<SliderItem> items;
         private TouchImageView imageView;
@@ -354,11 +356,13 @@ public class MediaSliderView extends ConstraintLayout {
 
         private ScreenSlidePagerAdapter(Context context,
                                         List<SliderItem> items,
-                                        DefaultHttpDataSource.Factory defaultExoFactory) {
+                                        DefaultHttpDataSource.Factory defaultExoFactory,
+                                        boolean onlyUseThumbnails) {
             this.context = context;
             this.items = items;
             this.progressBars = new HashMap<>();
             this.exoFactory = defaultExoFactory;
+            this.onlyUseThumbnails = onlyUseThumbnails;
         }
 
         public void setItems(List<SliderItem> items) {
@@ -389,11 +393,9 @@ public class MediaSliderView extends ConstraintLayout {
                 imageView = view.findViewById(R.id.mBigImage);
                 ProgressBar progressBar = view.findViewById(R.id.mProgressBar);
                 progressBars.put(position, progressBar);
-                Glide.with(context)
-                        .load(model.getUrl())
+                RequestBuilder<Drawable> glideLoader = Glide.with(context)
+                        .load(onlyUseThumbnails ? model.getThumbnailUrl() : model.getUrl())
                         .centerInside()
-                        .thumbnail(Glide.with(context)
-                                .load(model.getThumbnailUrl()))
                         .placeholder(context.getResources().getDrawable(R.drawable.images))
                         .listener(new RequestListener<Drawable>() {
                             @Override
@@ -407,8 +409,12 @@ public class MediaSliderView extends ConstraintLayout {
                                 hideProgressBar(position);
                                 return false;
                             }
-                        })
-                        .into(imageView);
+                        });
+                if(!onlyUseThumbnails){
+                    glideLoader = glideLoader.thumbnail(Glide.with(context)
+                            .load(model.getThumbnailUrl()));
+                }
+                glideLoader.into(imageView);
             } else if (model.getType() == SliderItemType.VIDEO) {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);

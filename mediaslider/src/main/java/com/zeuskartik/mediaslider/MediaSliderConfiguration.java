@@ -14,6 +14,7 @@ public class MediaSliderConfiguration implements Parcelable {
     private final String titleTextColor;
     private final int startPosition;
     private final int interval;
+    private final boolean onlyUseThumbnails;
 
     public MediaSliderConfiguration(boolean isTitleVisible,
                                     boolean isMediaCountVisible,
@@ -22,7 +23,8 @@ public class MediaSliderConfiguration implements Parcelable {
                                     String titleBackgroundColor,
                                     String titleTextColor,
                                     int startPosition,
-                                    int interval) {
+                                    int interval,
+                                    boolean onlyUseThumbnails) {
         this.isTitleVisible = isTitleVisible;
         this.isMediaCountVisible = isMediaCountVisible;
         this.isNavigationVisible = isNavigationVisible;
@@ -31,6 +33,7 @@ public class MediaSliderConfiguration implements Parcelable {
         this.titleTextColor = titleTextColor;
         this.startPosition = startPosition;
         this.interval = interval;
+        this.onlyUseThumbnails = onlyUseThumbnails;
     }
 
     protected MediaSliderConfiguration(Parcel in) {
@@ -42,6 +45,7 @@ public class MediaSliderConfiguration implements Parcelable {
         titleTextColor = in.readString();
         startPosition = in.readInt();
         interval = in.readInt();
+        onlyUseThumbnails = in.readByte() != 0;
     }
 
     public static final Creator<MediaSliderConfiguration> CREATOR = new Creator<MediaSliderConfiguration>() {
@@ -55,6 +59,10 @@ public class MediaSliderConfiguration implements Parcelable {
             return new MediaSliderConfiguration[size];
         }
     };
+
+    public boolean isOnlyUseThumbnails() {
+        return onlyUseThumbnails;
+    }
 
     public boolean isTitleVisible() {
         return isTitleVisible;
@@ -103,5 +111,6 @@ public class MediaSliderConfiguration implements Parcelable {
         dest.writeString(titleTextColor);
         dest.writeInt(startPosition);
         dest.writeInt(interval);
+        dest.writeByte((byte) (onlyUseThumbnails ? 1 : 0));
     }
 }
