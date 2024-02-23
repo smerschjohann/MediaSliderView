@@ -50,6 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import timber.log.Timber;
+
 public class MediaSliderView extends ConstraintLayout {
     private View playButton;
     private Handler mainHandler;
@@ -400,6 +402,7 @@ public class MediaSliderView extends ConstraintLayout {
                         .listener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                Timber.e(e, "Could not fetch image: %s", model);
                                 hideProgressBar(position);
                                 return false;
                             }
