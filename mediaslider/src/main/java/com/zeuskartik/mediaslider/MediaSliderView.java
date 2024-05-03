@@ -461,6 +461,11 @@ public class MediaSliderView extends ConstraintLayout {
             PlayerView exoplayer = view.findViewById(R.id.video_view);
             if (exoplayer != null && exoplayer.getPlayer() != null) {
                 exoplayer.getPlayer().release();
+            } else{
+                View imageView = view.findViewById(R.id.mBigImage);
+                if(imageView != null){
+                    Glide.with(context).clear(imageView);
+                }
             }
             container.removeView(view);
         }
