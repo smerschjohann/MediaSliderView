@@ -15,6 +15,7 @@ public class MediaSliderConfiguration implements Parcelable {
     private final int startPosition;
     private final int interval;
     private final boolean onlyUseThumbnails;
+    private final boolean isVideoSoundEnable;
 
     public MediaSliderConfiguration(boolean isTitleVisible,
                                     boolean isMediaCountVisible,
@@ -24,7 +25,8 @@ public class MediaSliderConfiguration implements Parcelable {
                                     String titleTextColor,
                                     int startPosition,
                                     int interval,
-                                    boolean onlyUseThumbnails) {
+                                    boolean onlyUseThumbnails,
+                                    boolean isVideoSoundEnable) {
         this.isTitleVisible = isTitleVisible;
         this.isMediaCountVisible = isMediaCountVisible;
         this.isNavigationVisible = isNavigationVisible;
@@ -34,6 +36,7 @@ public class MediaSliderConfiguration implements Parcelable {
         this.startPosition = startPosition;
         this.interval = interval;
         this.onlyUseThumbnails = onlyUseThumbnails;
+        this.isVideoSoundEnable = isVideoSoundEnable;
     }
 
     protected MediaSliderConfiguration(Parcel in) {
@@ -46,6 +49,7 @@ public class MediaSliderConfiguration implements Parcelable {
         startPosition = in.readInt();
         interval = in.readInt();
         onlyUseThumbnails = in.readByte() != 0;
+        isVideoSoundEnable = in.readByte() != 0;
     }
 
     public static final Creator<MediaSliderConfiguration> CREATOR = new Creator<MediaSliderConfiguration>() {
@@ -62,6 +66,10 @@ public class MediaSliderConfiguration implements Parcelable {
 
     public boolean isOnlyUseThumbnails() {
         return onlyUseThumbnails;
+    }
+
+    public boolean isVideoSoundEnable() {
+        return isVideoSoundEnable;
     }
 
     public boolean isTitleVisible() {
@@ -112,5 +120,6 @@ public class MediaSliderConfiguration implements Parcelable {
         dest.writeInt(startPosition);
         dest.writeInt(interval);
         dest.writeByte((byte) (onlyUseThumbnails ? 1 : 0));
+        dest.writeByte((byte) (isVideoSoundEnable ? 1 : 0));
     }
 }
