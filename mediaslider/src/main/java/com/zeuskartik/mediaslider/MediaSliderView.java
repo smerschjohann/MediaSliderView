@@ -205,7 +205,11 @@ public class MediaSliderView extends ConstraintLayout {
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
-        pagerAdapter = new ScreenSlidePagerAdapter(getContext(), items, defaultExoFactory, config.isOnlyUseThumbnails());
+        pagerAdapter = new ScreenSlidePagerAdapter(
+                    getContext(), items,
+                    defaultExoFactory,
+                    config.isOnlyUseThumbnails(),
+                    config.isVideoSoundEnable());
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -355,16 +359,20 @@ public class MediaSliderView extends ConstraintLayout {
         private List<SliderItem> items;
         private TouchImageView imageView;
         private Map<Integer, ProgressBar> progressBars;
+        private float currentVolume = 0;
+        private final boolean isVideoSoundEnable;
 
         private ScreenSlidePagerAdapter(Context context,
                                         List<SliderItem> items,
                                         DefaultHttpDataSource.Factory defaultExoFactory,
-                                        boolean onlyUseThumbnails) {
+                                        boolean onlyUseThumbnails,
+                                        boolean isVideoSoundEnable) {
             this.context = context;
             this.items = items;
             this.progressBars = new HashMap<>();
             this.exoFactory = defaultExoFactory;
             this.onlyUseThumbnails = onlyUseThumbnails;
+            this.isVideoSoundEnable = isVideoSoundEnable;
         }
 
         public void setItems(List<SliderItem> items) {
@@ -426,6 +434,10 @@ public class MediaSliderView extends ConstraintLayout {
                         .setPrioritizeTimeOverSizeThresholds(false)
                         .build()).build();
                 prepareMedia(model.getUrl(), player, exoFactory);
+                if (!isVideoSoundEnable) {
+                    currentVolume = player.getVolume();
+                    player.setVolume(0f);
+                }
                 player.setPlayWhenReady(false);
                 playerView.setPlayer(player);
                 ImageButton playBtn = playerView.findViewById(R.id.exo_pause);
@@ -460,6 +472,10 @@ public class MediaSliderView extends ConstraintLayout {
             View view = (View) object;
             PlayerView exoplayer = view.findViewById(R.id.video_view);
             if (exoplayer != null && exoplayer.getPlayer() != null) {
+                if (!isVideoSoundEnable) {
+                    exoplayer.getPlayer().setVolume(currentVolume);
+                    currentVolume = 0;
+                }
                 exoplayer.getPlayer().release();
             } else{
                 View imageView = view.findViewById(R.id.mBigImage);
