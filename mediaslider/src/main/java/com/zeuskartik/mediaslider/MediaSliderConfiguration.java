@@ -5,10 +5,10 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.EnumSet;
+
 public class MediaSliderConfiguration implements Parcelable {
-    private final boolean isTitleVisible;
-    private final boolean isMediaCountVisible;
-    private final boolean isNavigationVisible;
+    private final EnumSet<DisplayOptions> displayOptions;
     private final String title;
     private final String titleBackgroundColor;
     private final String titleTextColor;
@@ -17,9 +17,7 @@ public class MediaSliderConfiguration implements Parcelable {
     private final boolean onlyUseThumbnails;
     private final boolean isVideoSoundEnable;
 
-    public MediaSliderConfiguration(boolean isTitleVisible,
-                                    boolean isMediaCountVisible,
-                                    boolean isNavigationVisible,
+    public MediaSliderConfiguration(EnumSet<DisplayOptions> displayOptions,
                                     String title,
                                     String titleBackgroundColor,
                                     String titleTextColor,
@@ -27,9 +25,7 @@ public class MediaSliderConfiguration implements Parcelable {
                                     int interval,
                                     boolean onlyUseThumbnails,
                                     boolean isVideoSoundEnable) {
-        this.isTitleVisible = isTitleVisible;
-        this.isMediaCountVisible = isMediaCountVisible;
-        this.isNavigationVisible = isNavigationVisible;
+        this.displayOptions = displayOptions;
         this.title = title;
         this.titleBackgroundColor = titleBackgroundColor;
         this.titleTextColor = titleTextColor;
@@ -40,9 +36,7 @@ public class MediaSliderConfiguration implements Parcelable {
     }
 
     protected MediaSliderConfiguration(Parcel in) {
-        isTitleVisible = in.readByte() != 0;
-        isMediaCountVisible = in.readByte() != 0;
-        isNavigationVisible = in.readByte() != 0;
+        displayOptions = (EnumSet<DisplayOptions>) in.readSerializable();
         title = in.readString();
         titleBackgroundColor = in.readString();
         titleTextColor = in.readString();
@@ -72,16 +66,24 @@ public class MediaSliderConfiguration implements Parcelable {
         return isVideoSoundEnable;
     }
 
+    public boolean isClockVisible() { return displayOptions.contains(DisplayOptions.CLOCK); }
+
     public boolean isTitleVisible() {
-        return isTitleVisible;
+        return displayOptions.contains(DisplayOptions.TITLE);
     }
 
-    public boolean isMediaCountVisible() {
-        return isMediaCountVisible;
+    public boolean isSubtitleVisible() {
+        return displayOptions.contains(DisplayOptions.SUBTITLE);
     }
+
+    public boolean isDateVisible() {
+        return displayOptions.contains(DisplayOptions.DATE);
+    }
+
+    public boolean isMediaCountVisible() { return displayOptions.contains(DisplayOptions.MEDIA_COUNT); }
 
     public boolean isNavigationVisible() {
-        return isNavigationVisible;
+        return displayOptions.contains(DisplayOptions.NAVIGATION);
     }
 
     public String getTitle() {
@@ -104,6 +106,8 @@ public class MediaSliderConfiguration implements Parcelable {
         return interval;
     }
 
+    public boolean slideItemIntoView() { return displayOptions.contains(DisplayOptions.ANIMATE_ASST_SLIDE); }
+
     @Override
     public int describeContents() {
         return 0;
@@ -111,9 +115,7 @@ public class MediaSliderConfiguration implements Parcelable {
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
-        dest.writeByte((byte) (isTitleVisible ? 1 : 0));
-        dest.writeByte((byte) (isMediaCountVisible ? 1 : 0));
-        dest.writeByte((byte) (isNavigationVisible ? 1 : 0));
+        dest.writeSerializable(displayOptions);
         dest.writeString(title);
         dest.writeString(titleBackgroundColor);
         dest.writeString(titleTextColor);

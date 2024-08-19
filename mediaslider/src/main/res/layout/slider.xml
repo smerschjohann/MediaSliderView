@@ -11,38 +11,89 @@
     <RelativeLayout
         android:id="@+id/status_holder"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/transparent"
+        android:layout_height="250dp"
+        android:background="@drawable/gradient_overlay"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:elevation="10dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:gravity="bottom|right"
+        android:elevation="10dp"
+        android:paddingBottom="30dp">
+
+        <TextClock
+            android:id="@+id/clock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="10dp"
+            android:gravity="right"
+            android:paddingRight="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="48sp"
+            android:visibility="gone"
+            />
 
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/clock"
             android:elevation="10dp"
             android:ellipsize="end"
-            android:gravity="center"
+            android:gravity="bottom|right"
+            android:maxLines="2"
+            android:minLines="2"
+            android:paddingRight="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="18sp"
+            android:visibility="gone"
+            />
+
+        <TextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/title"
+            android:elevation="10dp"
+            android:gravity="right"
             android:maxLines="1"
             android:minLines="1"
-            android:padding="5dp"
+            android:paddingRight="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="14sp"
             android:visibility="gone"
-            android:textColor="#ffffff"
-            android:textSize="16sp" />
+            />
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subtitle"
+            android:elevation="10dp"
+            android:gravity="right"
+            android:maxLines="1"
+            android:minLines="1"
+            android:paddingRight="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="12sp"
+            android:visibility="gone"
+            />
 
         <TextView
             android:id="@+id/number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/title"
+            android:layout_below="@id/date"
             android:elevation="10dp"
-            android:gravity="center"
+            android:gravity="right"
             android:maxLines="1"
             android:minLines="1"
-            android:padding="5dp"
-            android:textColor="#ffffff"
+            android:paddingRight="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
             android:textSize="16sp"
             android:visibility="gone"
             />
