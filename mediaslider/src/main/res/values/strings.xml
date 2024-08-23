@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MediaSlider</string>
+    <string name="font_family">sans-serif-light</string>
 </resources>

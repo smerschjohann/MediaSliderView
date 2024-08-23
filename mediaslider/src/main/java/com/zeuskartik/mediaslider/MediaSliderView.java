@@ -46,8 +46,12 @@ import com.bumptech.glide.request.target.Target;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import timber.log.Timber;
@@ -192,15 +196,18 @@ public class MediaSliderView extends ConstraintLayout {
 
     private void goToNextAsset() {
         if (mPager.getCurrentItem() < mPager.getAdapter().getCount() - 1) {
-            mPager.setCurrentItem(mPager.getCurrentItem() + 1, true);
+            mPager.setCurrentItem(mPager.getCurrentItem() + 1, this.config.slideItemIntoView());
         } else {
-            mPager.setCurrentItem(0, true);
+            mPager.setCurrentItem(0, this.config.slideItemIntoView());
         }
     }
 
     private void initViewsAndSetAdapter(Player.Listener listener) {
         RelativeLayout statusLayout = findViewById(R.id.status_holder);
+        TextView slider_clock = findViewById(R.id.clock);
         TextView slider_title = findViewById(R.id.title);
+        TextView slider_subtitle = findViewById(R.id.subtitle);
+        TextView slider_date = findViewById(R.id.date);
         slider_media_number = findViewById(R.id.number);
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
@@ -213,12 +220,8 @@ public class MediaSliderView extends ConstraintLayout {
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
-        if (config.isTitleVisible() || config.isMediaCountVisible()) {
-            if (config.getTitleBackgroundColor() != null && config.getTitleBackgroundColor().matches(hexRegex)) {
-                statusLayout.setBackgroundColor(Color.parseColor(config.getTitleBackgroundColor()));
-            } else {
-                statusLayout.setBackgroundColor(getResources().getColor(R.color.transparent));
-            }
+        if (config.isClockVisible()) {
+            slider_clock.setVisibility(View.VISIBLE);
         }
         if (config.isTitleVisible()) {
             slider_title.setVisibility(View.VISIBLE);
@@ -230,6 +233,14 @@ public class MediaSliderView extends ConstraintLayout {
             if (config.getTitleTextColor() != null && config.getTitleTextColor().matches(hexRegex)) {
                 slider_title.setTextColor(Color.parseColor(config.getTitleTextColor()));
             }
+        }
+        if (config.isSubtitleVisible()) {
+            slider_subtitle.setVisibility(View.VISIBLE);
+            slider_subtitle.setText("");
+        }
+        if (config.isDateVisible()) {
+            slider_date.setVisibility(View.VISIBLE);
+            slider_date.setText("");
         }
         if (config.isMediaCountVisible()) {
             slider_media_number.setVisibility(View.VISIBLE);
@@ -265,6 +276,14 @@ public class MediaSliderView extends ConstraintLayout {
                 }
                 SliderItem sliderItem = items.get(i);
                 slider_title.setText(sliderItem.getDescription());
+                slider_subtitle.setText(sliderItem.getSubtitle());
+                Date date = sliderItem.getDate();
+                if (date != null) {
+                    slider_date.setText(formatDate(date));
+                } else {
+                    slider_date.setText("");
+                }
+
                 slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + items.size());
                 if (sliderItem.getType() == SliderItemType.VIDEO) {
                     View viewTag = mPager.findViewWithTag("view" + i);
@@ -406,7 +425,7 @@ public class MediaSliderView extends ConstraintLayout {
                 RequestBuilder<Drawable> glideLoader = Glide.with(context)
                         .load(onlyUseThumbnails ? model.getThumbnailUrl() : model.getUrl())
                         .centerInside()
-                        .placeholder(context.getResources().getDrawable(R.drawable.images))
+//                        .placeholder(context.getResources().getDrawable(R.drawable.images))
                         .listener(new RequestListener<Drawable>() {
                             @Override
                             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -485,7 +504,32 @@ public class MediaSliderView extends ConstraintLayout {
             }
             container.removeView(view);
         }
+    }
 
-
+    private static String formatDate(Date date){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        Locale locale = Locale. getDefault(Locale. Category. FORMAT);
+        int day = calendar.get(Calendar.DATE);
+        String formatString;
+        switch (day) {
+            case 1:
+            case 21:
+            case 31:
+                formatString = "EEEE',' d'ˢᵗ' MMMM yyyy";
+                break;
+            case 2:
+            case 22:
+                formatString = "EEEE',' d'ⁿᵈ' MMMM yyyy";
+                break;
+            case 3:
+            case 23:
+                formatString = "EEEE',' d'ʳᵈ' MMMM yyyy";
+                break;
+            default:
+                formatString = "EEEE',' d'ᵗʰ' MMMM yyyy";
+                break;
+        }
+        return new SimpleDateFormat(formatString, locale).format(date);
     }
 }

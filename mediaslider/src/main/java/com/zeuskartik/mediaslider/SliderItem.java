@@ -5,18 +5,23 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Date;
 import java.util.Objects;
 
 public class SliderItem implements Parcelable {
     private final String url;
     private final SliderItemType type;
     private final String description;
+    private final String subtitle;
+    private final Date date;
     private final String thumbnailUrl;
 
-    public SliderItem(String url, SliderItemType type, String description, String thumbnailUrl) {
+    public SliderItem(String url, SliderItemType type, String description, String subtitle, Date date, String thumbnailUrl) {
         this.url = url;
         this.type = type;
         this.description = description;
+        this.subtitle = subtitle;
+        this.date = date;
         this.thumbnailUrl = thumbnailUrl;
     }
 
@@ -24,6 +29,8 @@ public class SliderItem implements Parcelable {
         url = in.readString();
         type = SliderItemType.valueOf(in.readString());
         description = in.readString();
+        subtitle = in.readString();
+        date = (java.util.Date) in.readSerializable();
         thumbnailUrl = in.readString();
     }
 
@@ -51,6 +58,14 @@ public class SliderItem implements Parcelable {
         return description;
     }
 
+    public String getSubtitle() {
+        return subtitle;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
     public String getThumbnailUrl() {
         return thumbnailUrl;
     }
@@ -65,6 +80,8 @@ public class SliderItem implements Parcelable {
         dest.writeString(url);
         dest.writeString(type.toString());
         dest.writeString(description);
+        dest.writeString(subtitle);
+        dest.writeSerializable(date);
     }
 
     @Override
