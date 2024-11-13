@@ -7,5 +7,7 @@ public enum DisplayOptions {
     DATE,
     MEDIA_COUNT,
     ANIMATE_ASST_SLIDE,
-    NAVIGATION;
+    NAVIGATION,
+    // For screensaver, show a greyish overlay at the bottom to make the text/description more readable
+    GRADIENT_OVERLAY;
 }

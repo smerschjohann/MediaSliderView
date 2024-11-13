@@ -82,6 +82,8 @@ public class MediaSliderConfiguration implements Parcelable {
 
     public boolean isMediaCountVisible() { return displayOptions.contains(DisplayOptions.MEDIA_COUNT); }
 
+    public boolean isGradiantOverlayVisible() { return displayOptions.contains(DisplayOptions.GRADIENT_OVERLAY); }
+
     public boolean isNavigationVisible() {
         return displayOptions.contains(DisplayOptions.NAVIGATION);
     }

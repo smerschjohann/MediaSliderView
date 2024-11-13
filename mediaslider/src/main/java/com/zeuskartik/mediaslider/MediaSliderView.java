@@ -204,6 +204,9 @@ public class MediaSliderView extends ConstraintLayout {
 
     private void initViewsAndSetAdapter(Player.Listener listener) {
         RelativeLayout statusLayout = findViewById(R.id.status_holder);
+        if(config.isGradiantOverlayVisible()){
+            statusLayout.setBackgroundResource(R.drawable.gradient_overlay);
+        }
         TextView slider_clock = findViewById(R.id.clock);
         TextView slider_title = findViewById(R.id.title);
         TextView slider_subtitle = findViewById(R.id.subtitle);

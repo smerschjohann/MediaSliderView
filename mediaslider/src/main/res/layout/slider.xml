@@ -13,7 +13,6 @@
         android:id="@+id/status_holder"
         android:layout_width="match_parent"
         android:layout_height="250dp"
-        android:background="@drawable/gradient_overlay"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
