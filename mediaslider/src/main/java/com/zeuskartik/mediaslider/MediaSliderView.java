@@ -204,7 +204,7 @@ public class MediaSliderView extends ConstraintLayout {
 
     private void initViewsAndSetAdapter(Player.Listener listener) {
         RelativeLayout statusLayout = findViewById(R.id.status_holder);
-        if(config.isGradiantOverlayVisible()){
+        if (config.isGradiantOverlayVisible()) {
             statusLayout.setBackgroundResource(R.drawable.gradient_overlay);
         }
         TextView slider_clock = findViewById(R.id.clock);
@@ -216,10 +216,10 @@ public class MediaSliderView extends ConstraintLayout {
         ImageView right = findViewById(R.id.right_arrow);
         mPager = findViewById(R.id.pager);
         pagerAdapter = new ScreenSlidePagerAdapter(
-                    getContext(), items,
-                    defaultExoFactory,
-                    config.isOnlyUseThumbnails(),
-                    config.isVideoSoundEnable());
+                getContext(), items,
+                defaultExoFactory,
+                config.isOnlyUseThumbnails(),
+                config.isVideoSoundEnable());
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
         String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
@@ -443,7 +443,7 @@ public class MediaSliderView extends ConstraintLayout {
                                 return false;
                             }
                         });
-                if(!onlyUseThumbnails){
+                if (!onlyUseThumbnails) {
                     glideLoader = glideLoader.thumbnail(Glide.with(context)
                             .load(model.getThumbnailUrl()));
                 }
@@ -452,9 +452,11 @@ public class MediaSliderView extends ConstraintLayout {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);
                 playerView.setTag("view" + position);
-                ExoPlayer player = new ExoPlayer.Builder(context).setLoadControl(new DefaultLoadControl.Builder()
-                        .setPrioritizeTimeOverSizeThresholds(false)
-                        .build()).build();
+                ExoPlayer player = new ExoPlayer.Builder(context)
+                        .setLoadControl(new DefaultLoadControl.Builder()
+                                .setPrioritizeTimeOverSizeThresholds(false)
+                                .build()
+                        ).build();
                 prepareMedia(model.getUrl(), player, exoFactory);
                 if (!isVideoSoundEnable) {
                     currentVolume = player.getVolume();
@@ -499,9 +501,9 @@ public class MediaSliderView extends ConstraintLayout {
                     currentVolume = 0;
                 }
                 exoplayer.getPlayer().release();
-            } else{
+            } else {
                 View imageView = view.findViewById(R.id.mBigImage);
-                if(imageView != null){
+                if (imageView != null) {
                     Glide.with(context).clear(imageView);
                 }
             }
@@ -509,10 +511,10 @@ public class MediaSliderView extends ConstraintLayout {
         }
     }
 
-    private static String formatDate(Date date){
+    private static String formatDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        Locale locale = Locale. getDefault(Locale. Category. FORMAT);
+        Locale locale = Locale.getDefault(Locale.Category.FORMAT);
         int day = calendar.get(Calendar.DATE);
         String formatString;
         switch (day) {
