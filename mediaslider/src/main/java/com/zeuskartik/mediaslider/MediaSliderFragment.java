@@ -43,7 +43,7 @@ public class MediaSliderFragment extends Fragment {
         return (MediaSliderView) super.getView();
     }
 
-    public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItem> items) {
+    public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItemViewHolder> items) {
         getView().loadMediaSliderView(config, items);
     }
 

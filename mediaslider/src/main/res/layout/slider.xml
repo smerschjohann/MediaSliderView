@@ -10,7 +10,68 @@
     >
 
     <RelativeLayout
-        android:id="@+id/status_holder"
+        android:id="@+id/status_holder_left"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:gravity="bottom|left"
+        android:elevation="10dp"
+        android:paddingBottom="30dp">
+
+        <TextView
+            android:id="@+id/title_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="10dp"
+            android:ellipsize="end"
+            android:gravity="bottom|left"
+            android:maxLines="2"
+            android:minLines="2"
+            android:paddingLeft="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="18sp"
+            android:visibility="gone"
+            />
+
+        <TextView
+            android:id="@+id/subtitle_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/title_left"
+            android:elevation="10dp"
+            android:gravity="left"
+            android:maxLines="1"
+            android:minLines="1"
+            android:paddingLeft="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="14sp"
+            android:visibility="gone"
+            />
+
+        <TextView
+            android:id="@+id/date_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/subtitle_left"
+            android:elevation="10dp"
+            android:gravity="left"
+            android:maxLines="1"
+            android:minLines="1"
+            android:paddingLeft="100dp"
+            android:textColor="@color/details_text"
+            android:fontFamily="@string/font_family"
+            android:textSize="12sp"
+            android:visibility="gone"
+            />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/status_holder_right"
         android:layout_width="match_parent"
         android:layout_height="250dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,7 +95,7 @@
             />
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/title_right"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/clock"
@@ -51,10 +112,10 @@
             />
 
         <TextView
-            android:id="@+id/subtitle"
+            android:id="@+id/subtitle_right"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/title"
+            android:layout_below="@id/title_right"
             android:elevation="10dp"
             android:gravity="right"
             android:maxLines="1"
@@ -67,10 +128,10 @@
             />
 
         <TextView
-            android:id="@+id/date"
+            android:id="@+id/date_right"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/subtitle"
+            android:layout_below="@id/subtitle_right"
             android:elevation="10dp"
             android:gravity="right"
             android:maxLines="1"
@@ -86,7 +147,7 @@
             android:id="@+id/number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/date"
+            android:layout_below="@id/date_right"
             android:elevation="10dp"
             android:gravity="right"
             android:maxLines="1"
@@ -98,6 +159,8 @@
             android:visibility="gone"
             />
     </RelativeLayout>
+
+
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"

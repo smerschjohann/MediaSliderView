@@ -66,7 +66,7 @@ public class MediaSliderView extends ConstraintLayout {
     private boolean slideShowPlaying;
     private final Runnable goToNextAssetRunnable = this::goToNextAsset;
     private MediaSliderConfiguration config;
-    private List<SliderItem> items;
+    private List<SliderItemViewHolder> items;
     private ScreenSlidePagerAdapter pagerAdapter;
 
     public MediaSliderView(@NonNull Context context) {
@@ -120,7 +120,7 @@ public class MediaSliderView extends ConstraintLayout {
         return super.dispatchKeyEvent(event);
     }
 
-    public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItem> items) {
+    public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItemViewHolder> items) {
         this.config = config;
         this.items = items;
         Player.Listener listener = new Player.Listener() {
@@ -203,14 +203,25 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     private void initViewsAndSetAdapter(Player.Listener listener) {
-        RelativeLayout statusLayout = findViewById(R.id.status_holder);
+        RelativeLayout statusLayout = findViewById(R.id.status_holder_right);
         if (config.isGradiantOverlayVisible()) {
             statusLayout.setBackgroundResource(R.drawable.gradient_overlay);
         }
+
+        RelativeLayout statusLayoutLeft = findViewById(R.id.status_holder_left);
+        if (config.isGradiantOverlayVisible()) {
+            statusLayoutLeft.setBackgroundResource(R.drawable.gradient_overlay);
+        }
+
         TextView slider_clock = findViewById(R.id.clock);
-        TextView slider_title = findViewById(R.id.title);
-        TextView slider_subtitle = findViewById(R.id.subtitle);
-        TextView slider_date = findViewById(R.id.date);
+        TextView slider_title_right = findViewById(R.id.title_right);
+        TextView slider_subtitle_right = findViewById(R.id.subtitle_right);
+        TextView slider_date_right = findViewById(R.id.date_right);
+
+        TextView slider_title_left = findViewById(R.id.title_left);
+        TextView slider_subtitle_left = findViewById(R.id.subtitle_left);
+        TextView slider_date_left = findViewById(R.id.date_left);
+
         slider_media_number = findViewById(R.id.number);
         ImageView left = findViewById(R.id.left_arrow);
         ImageView right = findViewById(R.id.right_arrow);
@@ -227,23 +238,19 @@ public class MediaSliderView extends ConstraintLayout {
             slider_clock.setVisibility(View.VISIBLE);
         }
         if (config.isTitleVisible()) {
-            slider_title.setVisibility(View.VISIBLE);
-            if (config.getTitle() != null) {
-                slider_title.setText(config.getTitle());
-            } else {
-                slider_title.setText("");
-            }
+            slider_title_left.setVisibility(View.VISIBLE);
+            slider_title_right.setVisibility(View.VISIBLE);
             if (config.getTitleTextColor() != null && config.getTitleTextColor().matches(hexRegex)) {
-                slider_title.setTextColor(Color.parseColor(config.getTitleTextColor()));
+                slider_title_right.setTextColor(Color.parseColor(config.getTitleTextColor()));
             }
         }
         if (config.isSubtitleVisible()) {
-            slider_subtitle.setVisibility(View.VISIBLE);
-            slider_subtitle.setText("");
+            slider_subtitle_right.setVisibility(View.VISIBLE);
+            slider_subtitle_left.setVisibility(View.VISIBLE);
         }
         if (config.isDateVisible()) {
-            slider_date.setVisibility(View.VISIBLE);
-            slider_date.setText("");
+            slider_date_right.setVisibility(View.VISIBLE);
+            slider_date_left.setVisibility(View.VISIBLE);
         }
         if (config.isMediaCountVisible()) {
             slider_media_number.setVisibility(View.VISIBLE);
@@ -277,15 +284,17 @@ public class MediaSliderView extends ConstraintLayout {
                 if (i != mPager.getCurrentItem()) {
                     return;
                 }
-                SliderItem sliderItem = items.get(i);
-                slider_title.setText(sliderItem.getDescription());
-                slider_subtitle.setText(sliderItem.getSubtitle());
-                Date date = sliderItem.getDate();
+                SliderItemViewHolder sliderItem = items.get(i);
+                slider_title_right.setText(sliderItem.getDescriptionRight());
+                slider_subtitle_right.setText(sliderItem.getSubtitleRight());
+                Date date = sliderItem.getDateRight();
                 if (date != null) {
-                    slider_date.setText(formatDate(date));
+                    slider_date_right.setText(formatDate(date));
                 } else {
-                    slider_date.setText("");
+                    slider_date_right.setText("");
                 }
+
+                setSecondaryItemText(sliderItem);
 
                 slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + items.size());
                 if (sliderItem.getType() == SliderItemType.VIDEO) {
@@ -308,12 +317,31 @@ public class MediaSliderView extends ConstraintLayout {
 
             @Override
             public void onPageSelected(int i) {
-                SliderItem sliderItem = items.get(i);
+                SliderItemViewHolder sliderItem = items.get(i);
                 if (sliderItem.getType() == SliderItemType.IMAGE) {
                     if (slideShowPlaying) {
                         startTimerNextAsset();
                     }
                     stopPlayer();
+                }
+
+                setSecondaryItemText(sliderItem);
+            }
+
+            private void setSecondaryItemText(SliderItemViewHolder sliderItem) {
+                if (sliderItem.hasSecondaryItem()) {
+                    slider_title_left.setText(sliderItem.getDescriptionLeft());
+                    slider_subtitle_left.setText(sliderItem.getSubtitleLeft());
+                    Date dateLeft = sliderItem.getDateLeft();
+                    if (dateLeft != null) {
+                        slider_date_left.setText(formatDate(dateLeft));
+                    } else {
+                        slider_date_left.setText("");
+                    }
+                } else {
+                    slider_title_left.setText("");
+                    slider_subtitle_left.setText("");
+                    slider_date_left.setText("");
                 }
             }
 
@@ -362,7 +390,7 @@ public class MediaSliderView extends ConstraintLayout {
         player.prepare();
     }
 
-    public void setItems(@NotNull List<SliderItem> items) {
+    public void setItems(@NotNull List<SliderItemViewHolder> items) {
         if (slideShowPlaying) {
             // to prevent timing issues when adding + sliding at the same time
             mainHandler.removeCallbacks(goToNextAssetRunnable);
@@ -378,14 +406,14 @@ public class MediaSliderView extends ConstraintLayout {
         private final DefaultHttpDataSource.Factory exoFactory;
         private final boolean onlyUseThumbnails;
         private Context context;
-        private List<SliderItem> items;
+        private List<SliderItemViewHolder> items;
         private TouchImageView imageView;
         private Map<Integer, ProgressBar> progressBars;
         private float currentVolume = 0;
         private final boolean isVideoSoundEnable;
 
         private ScreenSlidePagerAdapter(Context context,
-                                        List<SliderItem> items,
+                                        List<SliderItemViewHolder> items,
                                         DefaultHttpDataSource.Factory defaultExoFactory,
                                         boolean onlyUseThumbnails,
                                         boolean isVideoSoundEnable) {
@@ -397,14 +425,15 @@ public class MediaSliderView extends ConstraintLayout {
             this.isVideoSoundEnable = isVideoSoundEnable;
         }
 
-        public void setItems(List<SliderItem> items) {
+        public void setItems(List<SliderItemViewHolder> items) {
             this.items = items;
             notifyDataSetChanged();
         }
 
         private void hideProgressBar(int position) {
-            if (progressBars.containsKey(position)) {
-                progressBars.get(position).setVisibility(View.GONE);
+            ProgressBar progressBar = progressBars.get(position);
+            if (progressBar != null) {
+                progressBar.setVisibility(View.GONE);
                 progressBars.remove(position);
             }
         }
@@ -419,35 +448,17 @@ public class MediaSliderView extends ConstraintLayout {
         public Object instantiateItem(@NonNull ViewGroup container, final int position) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
             View view = null;
-            SliderItem model = items.get(position);
+            SliderItemViewHolder model = items.get(position);
             if (model.getType() == SliderItemType.IMAGE) {
-                view = inflater.inflate(R.layout.image_item, container, false);
-                imageView = view.findViewById(R.id.mBigImage);
-                ProgressBar progressBar = view.findViewById(R.id.mProgressBar);
-                progressBars.put(position, progressBar);
-                RequestBuilder<Drawable> glideLoader = Glide.with(context)
-                        .load(onlyUseThumbnails ? model.getThumbnailUrl() : model.getUrl())
-                        .centerInside()
-//                        .placeholder(context.getResources().getDrawable(R.drawable.images))
-                        .listener(new RequestListener<Drawable>() {
-                            @Override
-                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                                Timber.e(e, "Could not fetch image: %s", model);
-                                hideProgressBar(position);
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                                hideProgressBar(position);
-                                return false;
-                            }
-                        });
-                if (!onlyUseThumbnails) {
-                    glideLoader = glideLoader.thumbnail(Glide.with(context)
-                            .load(model.getThumbnailUrl()));
+                if (model.hasSecondaryItem()) {
+                    view = inflater.inflate(R.layout.image_double_item, container, false);
+                    loadImageIntoView(view, R.id.left_image, position, model.mainItem());
+                    loadImageIntoView(view, R.id.right_image, position, model.secondaryItem());
+                } else {
+                    view = inflater.inflate(R.layout.image_item, container, false);
+                    loadImageIntoView(view, R.id.mBigImage, position, model.mainItem());
                 }
-                glideLoader.into(imageView);
+
             } else if (model.getType() == SliderItemType.VIDEO) {
                 view = inflater.inflate(R.layout.video_item, container, false);
                 PlayerView playerView = view.findViewById(R.id.video_view);
@@ -479,6 +490,37 @@ public class MediaSliderView extends ConstraintLayout {
             }
             container.addView(view);
             return view;
+        }
+
+        private void loadImageIntoView(View imageRootLayout, int imageViewResource, int position, SliderItem model) {
+            imageView = imageRootLayout.findViewById(imageViewResource);
+            ProgressBar progressBar = imageRootLayout.findViewById(R.id.mProgressBar);
+            if (progressBar != null) {
+                progressBars.put(position, progressBar);
+            }
+            RequestBuilder<Drawable> glideLoader = Glide.with(context)
+                    .load(onlyUseThumbnails ? model.getThumbnailUrl() : model.getUrl())
+                    .centerInside()
+//                        .placeholder(context.getResources().getDrawable(R.drawable.images))
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                            Timber.e(e, "Could not fetch image: %s", model);
+                            hideProgressBar(position);
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                            hideProgressBar(position);
+                            return false;
+                        }
+                    });
+            if (!onlyUseThumbnails) {
+                glideLoader = glideLoader.thumbnail(Glide.with(context)
+                        .load(model.getThumbnailUrl()));
+            }
+            glideLoader.into(imageView);
         }
 
         @Override

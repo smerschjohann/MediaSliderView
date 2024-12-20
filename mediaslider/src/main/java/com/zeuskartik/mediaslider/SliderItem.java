@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Objects;
 
 public class SliderItem implements Parcelable {
+    private final String id;
     private final String url;
     private final SliderItemType type;
     private final String description;
@@ -16,7 +17,8 @@ public class SliderItem implements Parcelable {
     private final Date date;
     private final String thumbnailUrl;
 
-    public SliderItem(String url, SliderItemType type, String description, String subtitle, Date date, String thumbnailUrl) {
+    public SliderItem(String id, String url, SliderItemType type, String description, String subtitle, Date date, String thumbnailUrl) {
+        this.id = id;
         this.url = url;
         this.type = type;
         this.description = description;
@@ -26,6 +28,7 @@ public class SliderItem implements Parcelable {
     }
 
     protected SliderItem(Parcel in) {
+        id = in.readString();
         url = in.readString();
         type = SliderItemType.valueOf(in.readString());
         description = in.readString();
@@ -66,6 +69,10 @@ public class SliderItem implements Parcelable {
         return date;
     }
 
+    public String getId() {
+        return id;
+    }
+
     public String getThumbnailUrl() {
         return thumbnailUrl;
     }
@@ -77,6 +84,7 @@ public class SliderItem implements Parcelable {
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(id);
         dest.writeString(url);
         dest.writeString(type.toString());
         dest.writeString(description);
