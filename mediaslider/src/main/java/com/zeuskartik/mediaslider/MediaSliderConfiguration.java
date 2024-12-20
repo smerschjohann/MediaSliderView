@@ -9,26 +9,17 @@ import java.util.EnumSet;
 
 public class MediaSliderConfiguration implements Parcelable {
     private final EnumSet<DisplayOptions> displayOptions;
-    private final String title;
-    private final String titleBackgroundColor;
-    private final String titleTextColor;
     private final int startPosition;
     private final int interval;
     private final boolean onlyUseThumbnails;
     private final boolean isVideoSoundEnable;
 
     public MediaSliderConfiguration(EnumSet<DisplayOptions> displayOptions,
-                                    String title,
-                                    String titleBackgroundColor,
-                                    String titleTextColor,
                                     int startPosition,
                                     int interval,
                                     boolean onlyUseThumbnails,
                                     boolean isVideoSoundEnable) {
         this.displayOptions = displayOptions;
-        this.title = title;
-        this.titleBackgroundColor = titleBackgroundColor;
-        this.titleTextColor = titleTextColor;
         this.startPosition = startPosition;
         this.interval = interval;
         this.onlyUseThumbnails = onlyUseThumbnails;
@@ -37,9 +28,6 @@ public class MediaSliderConfiguration implements Parcelable {
 
     protected MediaSliderConfiguration(Parcel in) {
         displayOptions = (EnumSet<DisplayOptions>) in.readSerializable();
-        title = in.readString();
-        titleBackgroundColor = in.readString();
-        titleTextColor = in.readString();
         startPosition = in.readInt();
         interval = in.readInt();
         onlyUseThumbnails = in.readByte() != 0;
@@ -88,18 +76,6 @@ public class MediaSliderConfiguration implements Parcelable {
         return displayOptions.contains(DisplayOptions.NAVIGATION);
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getTitleBackgroundColor() {
-        return titleBackgroundColor;
-    }
-
-    public String getTitleTextColor() {
-        return titleTextColor;
-    }
-
     public int getStartPosition() {
         return startPosition;
     }
@@ -118,9 +94,6 @@ public class MediaSliderConfiguration implements Parcelable {
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeSerializable(displayOptions);
-        dest.writeString(title);
-        dest.writeString(titleBackgroundColor);
-        dest.writeString(titleTextColor);
         dest.writeInt(startPosition);
         dest.writeInt(interval);
         dest.writeByte((byte) (onlyUseThumbnails ? 1 : 0));

@@ -107,17 +107,15 @@ public class MediaSliderView extends ConstraintLayout {
                 }
                 // Go to next photo if dpad right is clicked or just stop
                 return super.dispatchKeyEvent(event);
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && mPager.getAdapter().getCount() - 1 == mPager.getCurrentItem()) {
-                // last item, go to first
-                mPager.setCurrentItem(0, true);
+            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                mPager.setCurrentItem(mPager.getAdapter().getCount() - 1 == mPager.getCurrentItem() ? 0 : mPager.getCurrentItem() + 1, true);
                 return false;
-            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && 0 == mPager.getCurrentItem()) {
-                // last item, go to first
-                mPager.setCurrentItem(mPager.getAdapter().getCount() - 1, true);
+            } else if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
+                mPager.setCurrentItem((0 == mPager.getCurrentItem() ? mPager.getAdapter().getCount() : mPager.getCurrentItem()) - 1, true);
                 return false;
             }
         }
-        return super.dispatchKeyEvent(event);
+        return false;
     }
 
     public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItemViewHolder> items) {
@@ -240,9 +238,6 @@ public class MediaSliderView extends ConstraintLayout {
         if (config.isTitleVisible()) {
             slider_title_left.setVisibility(View.VISIBLE);
             slider_title_right.setVisibility(View.VISIBLE);
-            if (config.getTitleTextColor() != null && config.getTitleTextColor().matches(hexRegex)) {
-                slider_title_right.setTextColor(Color.parseColor(config.getTitleTextColor()));
-            }
         }
         if (config.isSubtitleVisible()) {
             slider_subtitle_right.setVisibility(View.VISIBLE);
