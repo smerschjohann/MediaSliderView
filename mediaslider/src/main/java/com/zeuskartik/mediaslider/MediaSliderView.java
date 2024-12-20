@@ -5,7 +5,6 @@ import static androidx.media3.common.Player.STATE_IDLE;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
@@ -201,11 +200,6 @@ public class MediaSliderView extends ConstraintLayout {
     }
 
     private void initViewsAndSetAdapter(Player.Listener listener) {
-        RelativeLayout statusLayout = findViewById(R.id.status_holder_right);
-        if (config.isGradiantOverlayVisible()) {
-            statusLayout.setBackgroundResource(R.drawable.gradient_overlay);
-        }
-
         RelativeLayout statusLayoutLeft = findViewById(R.id.status_holder_left);
         if (config.isGradiantOverlayVisible()) {
             statusLayoutLeft.setBackgroundResource(R.drawable.gradient_overlay);
@@ -231,7 +225,6 @@ public class MediaSliderView extends ConstraintLayout {
                 config.isVideoSoundEnable());
         mPager.setAdapter(pagerAdapter);
         setStartPosition();
-        String hexRegex = "/^#(?:(?:[\\da-f]{3}){1,2}|(?:[\\da-f]{4}){1,2})$/i";
         if (config.isClockVisible()) {
             slider_clock.setVisibility(View.VISIBLE);
         }
@@ -280,16 +273,7 @@ public class MediaSliderView extends ConstraintLayout {
                     return;
                 }
                 SliderItemViewHolder sliderItem = items.get(i);
-                slider_title_right.setText(sliderItem.getDescriptionRight());
-                slider_subtitle_right.setText(sliderItem.getSubtitleRight());
-                Date date = sliderItem.getDateRight();
-                if (date != null) {
-                    slider_date_right.setText(formatDate(date));
-                } else {
-                    slider_date_right.setText("");
-                }
-
-                setSecondaryItemText(sliderItem);
+                setItemText(sliderItem);
 
                 slider_media_number.setText((mPager.getCurrentItem() + 1) + "/" + items.size());
                 if (sliderItem.getType() == SliderItemType.VIDEO) {
@@ -320,10 +304,19 @@ public class MediaSliderView extends ConstraintLayout {
                     stopPlayer();
                 }
 
-                setSecondaryItemText(sliderItem);
+                setItemText(sliderItem);
             }
 
-            private void setSecondaryItemText(SliderItemViewHolder sliderItem) {
+            private void setItemText(SliderItemViewHolder sliderItem) {
+                slider_title_right.setText(sliderItem.getDescriptionRight());
+                slider_subtitle_right.setText(sliderItem.getSubtitleRight());
+                Date date = sliderItem.getDateRight();
+                if (date != null) {
+                    slider_date_right.setText(formatDate(date));
+                } else {
+                    slider_date_right.setText("");
+                }
+
                 if (sliderItem.hasSecondaryItem()) {
                     slider_title_left.setText(sliderItem.getDescriptionLeft());
                     slider_subtitle_left.setText(sliderItem.getSubtitleLeft());

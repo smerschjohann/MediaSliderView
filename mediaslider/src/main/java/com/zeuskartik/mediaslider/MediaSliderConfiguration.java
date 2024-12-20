@@ -54,7 +54,9 @@ public class MediaSliderConfiguration implements Parcelable {
         return isVideoSoundEnable;
     }
 
-    public boolean isClockVisible() { return displayOptions.contains(DisplayOptions.CLOCK); }
+    public boolean isClockVisible() {
+        return displayOptions.contains(DisplayOptions.CLOCK);
+    }
 
     public boolean isTitleVisible() {
         return displayOptions.contains(DisplayOptions.TITLE);
@@ -68,9 +70,13 @@ public class MediaSliderConfiguration implements Parcelable {
         return displayOptions.contains(DisplayOptions.DATE);
     }
 
-    public boolean isMediaCountVisible() { return displayOptions.contains(DisplayOptions.MEDIA_COUNT); }
+    public boolean isMediaCountVisible() {
+        return displayOptions.contains(DisplayOptions.MEDIA_COUNT);
+    }
 
-    public boolean isGradiantOverlayVisible() { return displayOptions.contains(DisplayOptions.GRADIENT_OVERLAY); }
+    public boolean isGradiantOverlayVisible() {
+        return (isMediaCountVisible() || isDateVisible() || isClockVisible() || isTitleVisible() || isSubtitleVisible()) && displayOptions.contains(DisplayOptions.GRADIENT_OVERLAY);
+    }
 
     public boolean isNavigationVisible() {
         return displayOptions.contains(DisplayOptions.NAVIGATION);
@@ -84,7 +90,9 @@ public class MediaSliderConfiguration implements Parcelable {
         return interval;
     }
 
-    public boolean slideItemIntoView() { return displayOptions.contains(DisplayOptions.ANIMATE_ASST_SLIDE); }
+    public boolean slideItemIntoView() {
+        return displayOptions.contains(DisplayOptions.ANIMATE_ASST_SLIDE);
+    }
 
     @Override
     public int describeContents() {
