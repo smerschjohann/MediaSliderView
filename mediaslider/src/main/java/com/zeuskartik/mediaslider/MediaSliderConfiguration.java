@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.EnumSet;
 
@@ -13,17 +14,20 @@ public class MediaSliderConfiguration implements Parcelable {
     private final int interval;
     private final boolean onlyUseThumbnails;
     private final boolean isVideoSoundEnable;
+    private final LoadMore loadMore;
 
     public MediaSliderConfiguration(EnumSet<DisplayOptions> displayOptions,
                                     int startPosition,
                                     int interval,
                                     boolean onlyUseThumbnails,
-                                    boolean isVideoSoundEnable) {
+                                    boolean isVideoSoundEnable,
+                                    @Nullable LoadMore loadMore) {
         this.displayOptions = displayOptions;
         this.startPosition = startPosition;
         this.interval = interval;
         this.onlyUseThumbnails = onlyUseThumbnails;
         this.isVideoSoundEnable = isVideoSoundEnable;
+        this.loadMore = loadMore;
     }
 
     protected MediaSliderConfiguration(Parcel in) {
@@ -32,6 +36,7 @@ public class MediaSliderConfiguration implements Parcelable {
         interval = in.readInt();
         onlyUseThumbnails = in.readByte() != 0;
         isVideoSoundEnable = in.readByte() != 0;
+        loadMore = (LoadMore) in.readSerializable();
     }
 
     public static final Creator<MediaSliderConfiguration> CREATOR = new Creator<MediaSliderConfiguration>() {
@@ -106,5 +111,11 @@ public class MediaSliderConfiguration implements Parcelable {
         dest.writeInt(interval);
         dest.writeByte((byte) (onlyUseThumbnails ? 1 : 0));
         dest.writeByte((byte) (isVideoSoundEnable ? 1 : 0));
+        dest.writeSerializable(loadMore);
+    }
+
+    @Nullable
+    public LoadMore getLoadMore() {
+        return loadMore;
     }
 }
