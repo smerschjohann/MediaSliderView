@@ -10,7 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.media3.datasource.DefaultHttpDataSource;
 
-import java.util.List;
+import nl.giejay.mediaslider.MediaSliderConfiguration;
+import nl.giejay.mediaslider.MediaSliderView;
 
 public class MediaSliderFragment extends Fragment {
     @Nullable
@@ -43,8 +44,8 @@ public class MediaSliderFragment extends Fragment {
         return (MediaSliderView) super.getView();
     }
 
-    public void loadMediaSliderView(final MediaSliderConfiguration config, final List<SliderItemViewHolder> items) {
-        getView().loadMediaSliderView(config, items);
+    public void loadMediaSliderView(final MediaSliderConfiguration config) {
+        getView().loadMediaSliderView(config);
     }
 
     public void setDefaultExoFactory(DefaultHttpDataSource.Factory defaultExoFactory) {
