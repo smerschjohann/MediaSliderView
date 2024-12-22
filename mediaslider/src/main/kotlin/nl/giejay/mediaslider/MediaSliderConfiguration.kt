@@ -19,7 +19,8 @@ class MediaSliderConfiguration : Parcelable {
                 onlyUseThumbnails: Boolean,
                 isVideoSoundEnable: Boolean,
                 assets: List<SliderItemViewHolder>,
-                loadMore: LoadMore?) {
+                loadMore: LoadMore?,
+                onAssetSelected: (SliderItemViewHolder) -> Unit = {}) {
         this.displayOptions = displayOptions
         this.startPosition = startPosition
         this.interval = interval
@@ -27,6 +28,7 @@ class MediaSliderConfiguration : Parcelable {
         this.isVideoSoundEnable = isVideoSoundEnable
         Companion.loadMore = loadMore
         Companion.assets = assets
+        Companion.onAssetSelected = onAssetSelected
     }
 
     private constructor(`in`: Parcel) {
@@ -62,11 +64,14 @@ class MediaSliderConfiguration : Parcelable {
     var items: List<SliderItemViewHolder>
         get() = assets
         set(value) {
-          assets = value
+            assets = value
         }
 
     val loadMore: LoadMore?
         get() = Companion.loadMore
+
+    val onAssetSelected: (SliderItemViewHolder) -> Unit
+        get() = Companion.onAssetSelected
 
     fun slideItemIntoView(): Boolean {
         return displayOptions!!.contains(DisplayOptions.ANIMATE_ASST_SLIDE)
@@ -88,6 +93,7 @@ class MediaSliderConfiguration : Parcelable {
         // Cant be serializable so this "workaround" for these two fields
         var assets: List<SliderItemViewHolder> = emptyList()
         var loadMore: LoadMore? = null
+        var onAssetSelected: (SliderItemViewHolder) -> Unit = { _ -> }
 
         @JvmField
         val CREATOR: Parcelable.Creator<MediaSliderConfiguration> =

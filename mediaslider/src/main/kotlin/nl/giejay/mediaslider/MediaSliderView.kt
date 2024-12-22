@@ -251,6 +251,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                     return
                 }
                 val sliderItem = config.items[i]
+                config.onAssetSelected(sliderItem)
                 setItemText(sliderItem)
 
                 if (config.loadMore != null && mPager.currentItem > config.items.size - 10 && !loading) {
