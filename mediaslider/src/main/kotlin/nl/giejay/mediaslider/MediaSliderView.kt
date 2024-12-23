@@ -12,8 +12,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -29,7 +29,6 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
-import androidx.viewpager.widget.ViewPager.OnPageChangeListener
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -48,19 +47,34 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.lang.reflect.Field
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlin.math.abs
+
 
 class MediaSliderView(context: Context) : ConstraintLayout(context) {
+    // view elements
     private var playButton: View
     private var mainHandler: Handler
-    private lateinit var mPager: ViewPager
-    private lateinit var sliderMediaNumber: TextView
+    private var mPager: ViewPager
+    private var sliderMediaNumber: TextView
+
+    private var subtitleLeft: TextView
+    private var subtitleRight: TextView
+    private var dateLeft: TextView
+    private var dateRight: TextView
+    private var titleLeft: TextView
+    private var titleRight: TextView
+    private var textViewDescriptions: List<TextView>
+
+    private var clock: TextView
+
+    // config
     private lateinit var config: MediaSliderConfiguration
 
+    /// internal
     private var currentPlayerInScope: ExoPlayer? = null
     private var defaultExoFactory = DefaultHttpDataSource.Factory()
     private var slideShowPlaying = false
@@ -72,15 +86,22 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
     init {
         inflate(getContext(), R.layout.slider, this)
         playButton = findViewById(R.id.playPause)
-        playButton.setOnClickListener { v: View? -> toggleSlideshow(true) }
+        playButton.setOnClickListener { toggleSlideshow(true) }
+        clock = findViewById(R.id.clock)
+        titleRight = findViewById(R.id.title_right)
+        titleLeft = findViewById(R.id.title_left)
+        subtitleRight = findViewById(R.id.subtitle_right)
+        subtitleLeft = findViewById(R.id.subtitle_left)
+        dateRight = findViewById(R.id.date_right)
+        dateLeft = findViewById(R.id.date_left)
+        textViewDescriptions = listOf(titleRight, titleLeft, dateRight, dateLeft, subtitleRight, subtitleLeft)
+
+        sliderMediaNumber = findViewById(R.id.number)
+//        val left = findViewById<ImageView>(R.id.left_arrow)
+//        val right = findViewById<ImageView>(R.id.right_arrow)
+        mPager = findViewById(R.id.pager)
         mainHandler = Handler(Looper.getMainLooper())
     }
-
-//    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
-//
-//    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-//
-//    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (mPager.adapter == null) {
@@ -100,7 +121,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 // Go to next photo if dpad right is clicked or just stop
                 return super.dispatchKeyEvent(event)
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                mPager.setCurrentItem(if (mPager.adapter!!.count - 1 == mPager.currentItem) 0 else mPager.currentItem + 1, true)
+                goToNextAsset()
                 return false
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 mPager.setCurrentItem((if (0 == mPager.currentItem) mPager.adapter!!.count else mPager.currentItem) - 1, true)
@@ -180,9 +201,9 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
 
     private fun goToNextAsset() {
         if (mPager.currentItem < mPager.adapter!!.count - 1) {
-            mPager.setCurrentItem(mPager.currentItem + 1, config.slideItemIntoView())
+            mPager.setCurrentItem(mPager.currentItem + 1, true)
         } else {
-            mPager.setCurrentItem(0, config.slideItemIntoView())
+            mPager.setCurrentItem(0, true)
         }
     }
 
@@ -192,74 +213,61 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             statusLayoutLeft.setBackgroundResource(R.drawable.gradient_overlay)
         }
 
-        val slider_clock = findViewById<TextView>(R.id.clock)
-        val slider_title_right = findViewById<TextView>(R.id.title_right)
-        val slider_subtitle_right = findViewById<TextView>(R.id.subtitle_right)
-        val slider_date_right = findViewById<TextView>(R.id.date_right)
-
-        val slider_title_left = findViewById<TextView>(R.id.title_left)
-        val slider_subtitle_left = findViewById<TextView>(R.id.subtitle_left)
-        val slider_date_left = findViewById<TextView>(R.id.date_left)
-
-        sliderMediaNumber = findViewById(R.id.number)
-        val left = findViewById<ImageView>(R.id.left_arrow)
-        val right = findViewById<ImageView>(R.id.right_arrow)
-        mPager = findViewById(R.id.pager)
         pagerAdapter = ScreenSlidePagerAdapter(
             context, config.items,
             defaultExoFactory,
             config.isOnlyUseThumbnails,
             config.isVideoSoundEnable)
-        mPager.setPageTransformer(false) { view, position ->
-            if (position <= -1.0f || position >= 1.0f) {
-                view.translationX = view.width * position
-                view.alpha = 0.0f
-            } else if (position == 0.0f) {
-                view.translationX = view.width * position
-                view.alpha = 1.0f
-            } else {
-                // position is between -1.0F & 0.0F OR 0.0F & 1.0F
-                view.translationX = view.width * -position
-                view.alpha = (1.0f - abs(position.toDouble())).toFloat()
+
+        try {
+            if (config.animationSpeedMillis > 0) {
+                val mScroller: Field = ViewPager::class.java.getDeclaredField("mScroller")
+                mScroller.isAccessible = true
+                val scroller = FixedSpeedScroller(mPager.context, DecelerateInterpolator(0.75F), config.animationSpeedMillis)
+                // scroller.setFixedDuration(5000);
+                mScroller.set(mPager, scroller)
             }
+        } catch (e: Exception) {
+            Timber.e(e, "Could not set scroller")
         }
+
         mPager.setAdapter(pagerAdapter)
         setStartPosition()
         if (config.isClockVisible) {
-            slider_clock.visibility = VISIBLE
+            clock.visibility = VISIBLE
         }
         if (config.isTitleVisible) {
-            slider_title_left.visibility = VISIBLE
-            slider_title_right.visibility = VISIBLE
+            titleLeft.visibility = VISIBLE
+            titleRight.visibility = VISIBLE
         }
         if (config.isSubtitleVisible) {
-            slider_subtitle_right.visibility = VISIBLE
-            slider_subtitle_left.visibility = VISIBLE
+            subtitleRight.visibility = VISIBLE
+            subtitleLeft.visibility = VISIBLE
         }
         if (config.isDateVisible) {
-            slider_date_right.visibility = VISIBLE
-            slider_date_left.visibility = VISIBLE
+            dateRight.visibility = VISIBLE
+            dateLeft.visibility = VISIBLE
         }
         if (config.isMediaCountVisible) {
             sliderMediaNumber.visibility = VISIBLE
             updateMediaCount()
         }
-        if (config.isNavigationVisible) {
-            left.visibility = VISIBLE
-            right.visibility = VISIBLE
-            left.setOnClickListener {
-                val i = mPager.currentItem
-                mPager.setCurrentItem(i - 1)
-                updateMediaCount()
-            }
-            right.setOnClickListener {
-                val i = mPager.currentItem
-                mPager.setCurrentItem(i + 1)
-                updateMediaCount()
-            }
-        }
+//        if (config.isNavigationVisible) {
+//            left.visibility = VISIBLE
+//            right.visibility = VISIBLE
+//            left.setOnClickListener {
+//                val i = mPager.currentItem
+//                mPager.setCurrentItem(i - 1)
+//                updateMediaCount()
+//            }
+//            right.setOnClickListener {
+//                val i = mPager.currentItem
+//                mPager.setCurrentItem(i + 1)
+//                updateMediaCount()
+//            }
+//        }
 
-        mPager.addOnPageChangeListener(object : OnPageChangeListener {
+        mPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrolled(i: Int, v: Float, i1: Int) {
                 stopPlayer()
                 if (i != mPager.currentItem) {
@@ -268,6 +276,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 val sliderItem = config.items[i]
                 config.onAssetSelected(sliderItem)
                 setItemText(sliderItem)
+                updateMediaCount()
 
                 if (config.loadMore != null && mPager.currentItem > config.items.size - 10 && !loading) {
                     loading = true
@@ -278,7 +287,6 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                         loading = nextItems.isEmpty()
                     }
                 }
-                updateMediaCount()
 
                 if (sliderItem.type == SliderItemType.VIDEO) {
                     val viewTag = mPager.findViewWithTag<View>("view$i") ?: return
@@ -293,50 +301,37 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                         currentPlayerInScope!!.addListener(listener)
                         currentPlayerInScope!!.playWhenReady = true
                     }
-                }
-            }
-
-            override fun onPageSelected(i: Int) {
-                val sliderItem = config.items[i]
-                if (sliderItem.type == SliderItemType.IMAGE) {
+                } else {
                     if (slideShowPlaying) {
                         startTimerNextAsset()
                     }
                     stopPlayer()
                 }
-
-                setItemText(sliderItem)
             }
 
-            fun setItemText(sliderItem: SliderItemViewHolder) {
-                slider_title_right.text = sliderItem.descriptionRight
-                slider_subtitle_right.text = sliderItem.subtitleRight
-                val date = sliderItem.dateRight
-                if (date != null) {
-                    slider_date_right.text = formatDate(date)
-                } else {
-                    slider_date_right.text = ""
-                }
-
-                if (sliderItem.hasSecondaryItem()) {
-                    slider_title_left.text = sliderItem.descriptionLeft
-                    slider_subtitle_left.text = sliderItem.subtitleLeft
-                    val dateLeft = sliderItem.dateLeft
-                    if (dateLeft != null) {
-                        slider_date_left.text = formatDate(dateLeft)
-                    } else {
-                        slider_date_left.text = ""
-                    }
-                } else {
-                    slider_title_left.text = ""
-                    slider_subtitle_left.text = ""
-                    slider_date_left.text = ""
-                }
+            override fun onPageSelected(i: Int) {
+                clearTextView(titleLeft, subtitleLeft, dateLeft)
             }
 
             override fun onPageScrollStateChanged(i: Int) {
             }
         })
+    }
+
+    fun setItemText(sliderItem: SliderItemViewHolder) {
+        titleRight.text = sliderItem.descriptionRight
+        subtitleRight.text = sliderItem.subtitleRight
+        sliderItem.dateRight?.let { dateRight.text = formatDate(it) } ?: clearTextView(this@MediaSliderView.dateRight)
+
+        if (sliderItem.hasSecondaryItem()) {
+            titleLeft.text = sliderItem.descriptionLeft
+            subtitleLeft.text = sliderItem.subtitleLeft
+            sliderItem.dateLeft?.let { dateLeft.text = formatDate(it) } ?: clearTextView(this@MediaSliderView.dateLeft)
+        }
+    }
+
+    private fun clearTextView(vararg view: TextView) {
+        view.forEach { it.text = "" }
     }
 
     private fun updateMediaCount() {
@@ -369,7 +364,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
         this.defaultExoFactory = defaultExoFactory
     }
 
-    suspend fun addItemsMain(items: List<SliderItemViewHolder>) = withContext(Dispatchers.Main){
+    suspend fun addItemsMain(items: List<SliderItemViewHolder>) = withContext(Dispatchers.Main) {
         addItems(items)
     }
 
@@ -378,7 +373,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
     }
 
     fun setItems(items: List<SliderItemViewHolder>) {
-        if(items.isEmpty()){
+        if (items.isEmpty()) {
             Toast.makeText(context, "No items received to show in slideshow", Toast.LENGTH_SHORT).show()
             return
         }

@@ -12,6 +12,7 @@ class MediaSliderConfiguration : Parcelable {
     val interval: Int
     val isOnlyUseThumbnails: Boolean
     val isVideoSoundEnable: Boolean
+    val animationSpeedMillis: Int
 
     constructor(displayOptions: EnumSet<DisplayOptions>?,
                 startPosition: Int,
@@ -20,7 +21,8 @@ class MediaSliderConfiguration : Parcelable {
                 isVideoSoundEnable: Boolean,
                 assets: List<SliderItemViewHolder>,
                 loadMore: LoadMore?,
-                onAssetSelected: (SliderItemViewHolder) -> Unit = {}) {
+                onAssetSelected: (SliderItemViewHolder) -> Unit = {},
+                animationSpeedMillis: Int) {
         this.displayOptions = displayOptions
         this.startPosition = startPosition
         this.interval = interval
@@ -29,6 +31,7 @@ class MediaSliderConfiguration : Parcelable {
         Companion.loadMore = loadMore
         Companion.assets = assets
         Companion.onAssetSelected = onAssetSelected
+        this.animationSpeedMillis = animationSpeedMillis
     }
 
     private constructor(`in`: Parcel) {
@@ -37,6 +40,7 @@ class MediaSliderConfiguration : Parcelable {
         interval = `in`.readInt()
         isOnlyUseThumbnails = `in`.readByte().toInt() != 0
         isVideoSoundEnable = `in`.readByte().toInt() != 0
+        this.animationSpeedMillis = `in`.readInt()
     }
 
     val isClockVisible: Boolean
@@ -87,6 +91,7 @@ class MediaSliderConfiguration : Parcelable {
         dest.writeInt(interval)
         dest.writeByte((if (isOnlyUseThumbnails) 1 else 0).toByte())
         dest.writeByte((if (isVideoSoundEnable) 1 else 0).toByte())
+        dest.writeInt(animationSpeedMillis)
     }
 
     companion object {
