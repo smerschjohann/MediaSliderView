@@ -52,6 +52,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 class MediaSliderView(context: Context) : ConstraintLayout(context) {
     private var playButton: View
@@ -209,6 +210,19 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             defaultExoFactory,
             config.isOnlyUseThumbnails,
             config.isVideoSoundEnable)
+        mPager.setPageTransformer(false) { view, position ->
+            if (position <= -1.0f || position >= 1.0f) {
+                view.translationX = view.width * position
+                view.alpha = 0.0f
+            } else if (position == 0.0f) {
+                view.translationX = view.width * position
+                view.alpha = 1.0f
+            } else {
+                // position is between -1.0F & 0.0F OR 0.0F & 1.0F
+                view.translationX = view.width * -position
+                view.alpha = (1.0f - abs(position.toDouble())).toFloat()
+            }
+        }
         mPager.setAdapter(pagerAdapter)
         setStartPosition()
         if (config.isClockVisible) {
