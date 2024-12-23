@@ -17,6 +17,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -363,6 +364,10 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
     }
 
     fun setItems(items: List<SliderItemViewHolder>) {
+        if(items.isEmpty()){
+            Toast.makeText(context, "No items received to show in slideshow", Toast.LENGTH_SHORT).show()
+            return
+        }
         if (slideShowPlaying) {
             // to prevent timing issues when adding + sliding at the same time
             mainHandler.removeCallbacks(goToNextAssetRunnable)
