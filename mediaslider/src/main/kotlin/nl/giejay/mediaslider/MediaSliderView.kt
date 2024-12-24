@@ -3,18 +3,14 @@ package nl.giejay.mediaslider
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
-import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -23,24 +19,15 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import com.zeuskartik.mediaslider.R
-import com.zeuskartik.mediaslider.SliderItem
 import com.zeuskartik.mediaslider.SliderItemType
 import com.zeuskartik.mediaslider.SliderItemViewHolder
-import com.zeuskartik.mediaslider.TouchImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -124,7 +111,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 goToNextAsset()
                 return false
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                mPager.setCurrentItem((if (0 == mPager.currentItem) mPager.adapter!!.count else mPager.currentItem) - 1, true)
+                mPager.setCurrentItem((if (0 == mPager.currentItem) mPager.adapter!!.count else mPager.currentItem) - 1, config.enableSlideAnimation())
                 return false
             }
         }
@@ -201,9 +188,9 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
 
     private fun goToNextAsset() {
         if (mPager.currentItem < mPager.adapter!!.count - 1) {
-            mPager.setCurrentItem(mPager.currentItem + 1, true)
+            mPager.setCurrentItem(mPager.currentItem + 1, config.enableSlideAnimation())
         } else {
-            mPager.setCurrentItem(0, true)
+            mPager.setCurrentItem(0, config.enableSlideAnimation())
         }
     }
 
@@ -220,7 +207,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             config.isVideoSoundEnable)
 
         try {
-            if (config.animationSpeedMillis > 0) {
+            if (config.enableSlideAnimation() && config.animationSpeedMillis > 0) {
                 val mScroller: Field = ViewPager::class.java.getDeclaredField("mScroller")
                 mScroller.isAccessible = true
                 val scroller = FixedSpeedScroller(mPager.context, DecelerateInterpolator(0.75F), config.animationSpeedMillis)
@@ -388,141 +375,9 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
         }
     }
 
-    private class ScreenSlidePagerAdapter(private val context: Context,
-                                          private var items: List<SliderItemViewHolder>,
-                                          private val exoFactory: DefaultHttpDataSource.Factory,
-                                          private val onlyUseThumbnails: Boolean,
-                                          private val isVideoSoundEnable: Boolean) : PagerAdapter() {
-        private var imageView: TouchImageView? = null
-        private val progressBars: MutableMap<Int, ProgressBar> = HashMap()
-        private var currentVolume = 0f
-
-        fun setItems(items: List<SliderItemViewHolder>) {
-            this.items = items
-            notifyDataSetChanged()
-        }
-
-        fun hideProgressBar(position: Int) {
-            val progressBar = progressBars[position]
-            if (progressBar != null) {
-                progressBar.visibility = GONE
-                progressBars.remove(position)
-            }
-        }
-
-        override fun getItemPosition(`object`: Any): Int {
-            return POSITION_NONE
-        }
-
-        @SuppressLint("UnsafeOptInUsageError")
-        override fun instantiateItem(container: ViewGroup, position: Int): Any {
-            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            var view: View? = null
-            val model = items[position]
-            if (model.type == SliderItemType.IMAGE) {
-                if (model.hasSecondaryItem()) {
-                    view = inflater.inflate(R.layout.image_double_item, container, false)
-                    loadImageIntoView(view, R.id.left_image, position, model.mainItem)
-                    loadImageIntoView(view, R.id.right_image, position, model.secondaryItem!!)
-                } else {
-                    view = inflater.inflate(R.layout.image_item, container, false)
-                    loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
-                }
-            } else if (model.type == SliderItemType.VIDEO) {
-                view = inflater.inflate(R.layout.video_item, container, false)
-                val playerView = view.findViewById<PlayerView>(R.id.video_view)
-                playerView.tag = "view$position"
-                val player = ExoPlayer.Builder(context)
-                    .setLoadControl(DefaultLoadControl.Builder()
-                        .setPrioritizeTimeOverSizeThresholds(false)
-                        .build()
-                    ).build()
-                prepareMedia(model.url, player, exoFactory)
-                if (!isVideoSoundEnable) {
-                    currentVolume = player.volume
-                    player.volume = 0f
-                }
-                player.playWhenReady = false
-                playerView.player = player
-                val playBtn = playerView.findViewById<ImageButton>(R.id.exo_pause)
-                playBtn.setOnClickListener { v: View? ->
-                    //events on play buttons
-                    if (player.isPlaying) {
-                        player.pause()
-                    } else {
-                        if (player.currentPosition >= player.contentDuration) {
-                            player.seekToDefaultPosition()
-                        }
-                        player.play()
-                    }
-                }
-            }
-            container.addView(view)
-            return view!!
-        }
-
-        fun loadImageIntoView(imageRootLayout: View, imageViewResource: Int, position: Int, model: SliderItem) {
-            imageView = imageRootLayout.findViewById(imageViewResource)
-            val progressBar = imageRootLayout.findViewById<ProgressBar>(R.id.mProgressBar)
-            if (progressBar != null) {
-                progressBars[position] = progressBar
-            }
-            var glideLoader = Glide.with(context)
-                .load(if (onlyUseThumbnails) model.thumbnailUrl else model.url)
-                .centerInside() //                        .placeholder(context.getResources().getDrawable(R.drawable.images))
-                .listener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable?>, isFirstResource: Boolean): Boolean {
-                        Timber.e(e, "Could not fetch image: %s", model)
-                        hideProgressBar(position)
-                        return false
-                    }
-
-                    override fun onResourceReady(resource: Drawable,
-                                                 model: Any,
-                                                 target: Target<Drawable>,
-                                                 dataSource: DataSource,
-                                                 isFirstResource: Boolean): Boolean {
-                        hideProgressBar(position)
-                        return false
-                    }
-                })
-            if (!onlyUseThumbnails) {
-                glideLoader = glideLoader.thumbnail(Glide.with(context)
-                    .load(model.thumbnailUrl))
-            }
-            glideLoader.into(imageView!!)
-        }
-
-        override fun getCount(): Int {
-            return items.size
-        }
-
-        override fun isViewFromObject(view: View, o: Any): Boolean {
-            return (view === o)
-        }
-
-        override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
-            val view = `object` as View
-            val exoplayer = view.findViewById<PlayerView>(R.id.video_view)
-            if (exoplayer != null && exoplayer.player != null) {
-                if (!isVideoSoundEnable) {
-                    exoplayer.player!!.volume = currentVolume
-                    currentVolume = 0f
-                }
-                exoplayer.player!!.release()
-            } else {
-                val imageView = view.findViewById<View>(R.id.mBigImage)
-                if (imageView != null) {
-                    Glide.with(context).clear(imageView)
-                }
-            }
-            container.removeView(view)
-        }
-    }
-
     companion object {
         @SuppressLint("UnsafeOptInUsageError")
-        private fun prepareMedia(mediaUrl: String, player: ExoPlayer, factory: DefaultHttpDataSource.Factory) {
+        fun prepareMedia(mediaUrl: String, player: ExoPlayer, factory: DefaultHttpDataSource.Factory) {
             val mediaUri = Uri.parse(mediaUrl)
             val mediaItem = MediaItem.fromUri(mediaUri)
             val mediaSource = ProgressiveMediaSource.Factory(factory).createMediaSource(mediaItem)

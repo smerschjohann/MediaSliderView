@@ -77,7 +77,7 @@ class MediaSliderConfiguration : Parcelable {
     val onAssetSelected: (SliderItemViewHolder) -> Unit
         get() = Companion.onAssetSelected
 
-    fun slideItemIntoView(): Boolean {
+    fun enableSlideAnimation(): Boolean {
         return displayOptions!!.contains(DisplayOptions.ANIMATE_ASST_SLIDE)
     }
 
