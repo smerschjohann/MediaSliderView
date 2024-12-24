@@ -17,6 +17,7 @@ class MediaSliderConfiguration : Parcelable {
     val maxCutOffHeight: Int
     val maxCutOffWidth: Int
     val glideTransformation: GlideTransformations
+    val debugEnabled: Boolean
 
     constructor(displayOptions: EnumSet<DisplayOptions>?,
                 startPosition: Int,
@@ -29,7 +30,8 @@ class MediaSliderConfiguration : Parcelable {
                 animationSpeedMillis: Int,
                 maxCutOffHeight: Int,
                 maxCutOffWidth: Int,
-                transformation: GlideTransformations) {
+                transformation: GlideTransformations,
+                debugEnabled: Boolean) {
         this.displayOptions = displayOptions
         this.startPosition = startPosition
         this.interval = interval
@@ -42,6 +44,7 @@ class MediaSliderConfiguration : Parcelable {
         this.maxCutOffHeight = maxCutOffHeight
         this.maxCutOffWidth = maxCutOffWidth
         this.glideTransformation = transformation
+        this.debugEnabled = debugEnabled
     }
 
     private constructor(`in`: Parcel) {
@@ -54,6 +57,7 @@ class MediaSliderConfiguration : Parcelable {
         this.maxCutOffHeight =  `in`.readInt()
         this.maxCutOffWidth =  `in`.readInt()
         this.glideTransformation = GlideTransformations.valueOfSafe(`in`.readString()!!, GlideTransformations.CENTER_INSIDE)
+        this.debugEnabled = `in`.readInt() == 1
     }
 
     val isClockVisible: Boolean
@@ -108,6 +112,7 @@ class MediaSliderConfiguration : Parcelable {
         dest.writeInt(maxCutOffHeight)
         dest.writeInt(maxCutOffWidth)
         dest.writeString(glideTransformation.toString())
+        dest.writeInt(if(debugEnabled) 1 else 0)
     }
 
     companion object {

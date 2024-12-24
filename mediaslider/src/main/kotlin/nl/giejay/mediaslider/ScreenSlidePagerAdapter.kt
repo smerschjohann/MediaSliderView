@@ -29,132 +29,137 @@ class ScreenSlidePagerAdapter(private val context: Context,
                               private var items: List<SliderItemViewHolder>,
                               private val exoFactory: DefaultHttpDataSource.Factory,
                               private val config: MediaSliderConfiguration,
-    ) : PagerAdapter() {
-        private var imageView: TouchImageView? = null
-        private val progressBars: MutableMap<Int, ProgressBar> = HashMap()
-        private var currentVolume = 0f
+                              private val transformResult: (String, Int) -> Unit) : PagerAdapter() {
+    private var imageView: TouchImageView? = null
+    private val progressBars: MutableMap<Int, ProgressBar> = HashMap()
+    private var currentVolume = 0f
 
-        fun setItems(items: List<SliderItemViewHolder>) {
-            this.items = items
-            notifyDataSetChanged()
-        }
+    fun setItems(items: List<SliderItemViewHolder>) {
+        this.items = items
+        notifyDataSetChanged()
+    }
 
-        fun hideProgressBar(position: Int) {
-            val progressBar = progressBars[position]
-            if (progressBar != null) {
-                progressBar.visibility = GONE
-                progressBars.remove(position)
-            }
-        }
-
-        override fun getItemPosition(`object`: Any): Int {
-            return POSITION_NONE
-        }
-
-        @SuppressLint("UnsafeOptInUsageError")
-        override fun instantiateItem(container: ViewGroup, position: Int): Any {
-            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            var view: View? = null
-            val model = items[position]
-            if (model.type == SliderItemType.IMAGE) {
-                if (model.hasSecondaryItem()) {
-                    view = inflater.inflate(R.layout.image_double_item, container, false)
-                    loadImageIntoView(view, R.id.left_image, position, model.mainItem)
-                    loadImageIntoView(view, R.id.right_image, position, model.secondaryItem!!)
-                } else {
-                    view = inflater.inflate(R.layout.image_item, container, false)
-                    loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
-                }
-            } else if (model.type == SliderItemType.VIDEO) {
-                view = inflater.inflate(R.layout.video_item, container, false)
-                val playerView = view.findViewById<PlayerView>(R.id.video_view)
-                playerView.tag = "view$position"
-                val player = ExoPlayer.Builder(context)
-                    .setLoadControl(DefaultLoadControl.Builder()
-                        .setPrioritizeTimeOverSizeThresholds(false)
-                        .build()
-                    ).build()
-                prepareMedia(model.url, player, exoFactory)
-                if (!config.isVideoSoundEnable) {
-                    currentVolume = player.volume
-                    player.volume = 0f
-                }
-                player.playWhenReady = false
-                playerView.player = player
-                val playBtn = playerView.findViewById<ImageButton>(R.id.exo_pause)
-                playBtn.setOnClickListener { v: View? ->
-                    //events on play buttons
-                    if (player.isPlaying) {
-                        player.pause()
-                    } else {
-                        if (player.currentPosition >= player.contentDuration) {
-                            player.seekToDefaultPosition()
-                        }
-                        player.play()
-                    }
-                }
-            }
-            container.addView(view)
-            return view!!
-        }
-
-        fun loadImageIntoView(imageRootLayout: View, imageViewResource: Int,
-                              position: Int, model: SliderItem) {
-            imageView = imageRootLayout.findViewById(imageViewResource)
-            val progressBar = imageRootLayout.findViewById<ProgressBar>(R.id.mProgressBar)
-            if (progressBar != null) {
-                progressBars[position] = progressBar
-            }
-            var glideLoader = Glide.with(context)
-                .load(if (config.isOnlyUseThumbnails) model.thumbnailUrl else model.url)
-                .transform(config.glideTransformation.transform(context, config))
-                .listener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(e: GlideException?, model: Any?, target: com.bumptech.glide.request.target.Target<Drawable>, isFirstResource: Boolean): Boolean {
-                        Timber.e(e, "Could not fetch image: %s", model)
-                        hideProgressBar(position)
-                        return false
-                    }
-
-                    override fun onResourceReady(resource: Drawable,
-                                                 model: Any,
-                                                 target: com.bumptech.glide.request.target.Target<Drawable>,
-                                                 dataSource: com.bumptech.glide.load.DataSource,
-                                                 isFirstResource: Boolean): Boolean {
-                        hideProgressBar(position)
-                        return false
-                    }
-
-                })
-            if (!config.isOnlyUseThumbnails) {
-                glideLoader = glideLoader.thumbnail(Glide.with(context)
-                    .load(model.thumbnailUrl))
-            }
-            glideLoader.into(imageView!!)
-        }
-
-        override fun getCount(): Int {
-            return items.size
-        }
-
-        override fun isViewFromObject(view: View, o: Any): Boolean {
-            return (view === o)
-        }
-
-        override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
-            val view = `object` as View
-            val exoplayer = view.findViewById<PlayerView>(R.id.video_view)
-            if (exoplayer != null && exoplayer.player != null) {
-                if (!config.isVideoSoundEnable) {
-                    exoplayer.player!!.volume = currentVolume
-                    currentVolume = 0f
-                }
-                exoplayer.player!!.release()
-            } else {
-                val imageView = view.findViewById<View>(R.id.mBigImage)
-                if (imageView != null) {
-                    Glide.with(context).clear(imageView)
-                }
-            }
-            container.removeView(view)
+    fun hideProgressBar(position: Int) {
+        val progressBar = progressBars[position]
+        if (progressBar != null) {
+            progressBar.visibility = GONE
+            progressBars.remove(position)
         }
     }
+
+    override fun getItemPosition(`object`: Any): Int {
+        return POSITION_NONE
+    }
+
+    @SuppressLint("UnsafeOptInUsageError")
+    override fun instantiateItem(container: ViewGroup, position: Int): Any {
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        var view: View? = null
+        val model = items[position]
+        if (model.type == SliderItemType.IMAGE) {
+            if (model.hasSecondaryItem()) {
+                view = inflater.inflate(R.layout.image_double_item, container, false)
+                loadImageIntoView(view, R.id.left_image, position, model.mainItem)
+                loadImageIntoView(view, R.id.right_image, position, model.secondaryItem!!)
+            } else {
+                view = inflater.inflate(R.layout.image_item, container, false)
+                loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
+            }
+        } else if (model.type == SliderItemType.VIDEO) {
+            view = inflater.inflate(R.layout.video_item, container, false)
+            val playerView = view.findViewById<PlayerView>(R.id.video_view)
+            playerView.tag = "view$position"
+            val player = ExoPlayer.Builder(context)
+                .setLoadControl(DefaultLoadControl.Builder()
+                    .setPrioritizeTimeOverSizeThresholds(false)
+                    .build()
+                ).build()
+            prepareMedia(model.url, player, exoFactory)
+            if (!config.isVideoSoundEnable) {
+                currentVolume = player.volume
+                player.volume = 0f
+            }
+            player.playWhenReady = false
+            playerView.player = player
+            val playBtn = playerView.findViewById<ImageButton>(R.id.exo_pause)
+            playBtn.setOnClickListener { v: View? ->
+                //events on play buttons
+                if (player.isPlaying) {
+                    player.pause()
+                } else {
+                    if (player.currentPosition >= player.contentDuration) {
+                        player.seekToDefaultPosition()
+                    }
+                    player.play()
+                }
+            }
+        }
+        container.addView(view)
+        return view!!
+    }
+
+    private fun loadImageIntoView(imageRootLayout: View,
+                                  imageViewResource: Int,
+                                  position: Int,
+                                  model: SliderItem) {
+        imageView = imageRootLayout.findViewById(imageViewResource)
+        val progressBar = imageRootLayout.findViewById<ProgressBar>(R.id.mProgressBar)
+        if (progressBar != null) {
+            progressBars[position] = progressBar
+        }
+        var glideLoader = Glide.with(context)
+            .load(if (config.isOnlyUseThumbnails) model.thumbnailUrl else model.url)
+            .transform(config.glideTransformation.transform(context, config) { result -> transformResult(result, position) })
+            .listener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(e: GlideException?,
+                                          model: Any?,
+                                          target: com.bumptech.glide.request.target.Target<Drawable>,
+                                          isFirstResource: Boolean): Boolean {
+                    Timber.e(e, "Could not fetch image: %s", model)
+                    hideProgressBar(position)
+                    return false
+                }
+
+                override fun onResourceReady(resource: Drawable,
+                                             model: Any,
+                                             target: com.bumptech.glide.request.target.Target<Drawable>,
+                                             dataSource: com.bumptech.glide.load.DataSource,
+                                             isFirstResource: Boolean): Boolean {
+                    hideProgressBar(position)
+                    return false
+                }
+
+            })
+        if (!config.isOnlyUseThumbnails) {
+            glideLoader = glideLoader.thumbnail(Glide.with(context)
+                .load(model.thumbnailUrl))
+        }
+        glideLoader.into(imageView!!)
+    }
+
+    override fun getCount(): Int {
+        return items.size
+    }
+
+    override fun isViewFromObject(view: View, o: Any): Boolean {
+        return (view === o)
+    }
+
+    override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
+        val view = `object` as View
+        val exoplayer = view.findViewById<PlayerView>(R.id.video_view)
+        if (exoplayer != null && exoplayer.player != null) {
+            if (!config.isVideoSoundEnable) {
+                exoplayer.player!!.volume = currentVolume
+                currentVolume = 0f
+            }
+            exoplayer.player!!.release()
+        } else {
+            val imageView = view.findViewById<View>(R.id.mBigImage)
+            if (imageView != null) {
+                Glide.with(context).clear(imageView)
+            }
+        }
+        container.removeView(view)
+    }
+}

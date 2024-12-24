@@ -69,6 +69,8 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
     private var pagerAdapter: ScreenSlidePagerAdapter? = null
     private var loading = false
     private val ioScope = CoroutineScope(Job() + Dispatchers.IO)
+    private val transformResults = mutableMapOf<Int, String>()
+    private var currentToast: Toast? = null
 
     init {
         inflate(getContext(), R.layout.slider, this)
@@ -111,7 +113,8 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 goToNextAsset()
                 return false
             } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                mPager.setCurrentItem((if (0 == mPager.currentItem) mPager.adapter!!.count else mPager.currentItem) - 1, config.enableSlideAnimation())
+                mPager.setCurrentItem((if (0 == mPager.currentItem) mPager.adapter!!.count else mPager.currentItem) - 1,
+                    config.enableSlideAnimation())
                 return false
             }
         }
@@ -203,7 +206,8 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
         pagerAdapter = ScreenSlidePagerAdapter(
             context, config.items,
             defaultExoFactory,
-            config)
+            config
+        ) { result, position -> transformResults[position] = result }
 
         try {
             if (config.enableSlideAnimation() && config.animationSpeedMillis > 0) {
@@ -263,6 +267,12 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 config.onAssetSelected(sliderItem)
                 setItemText(sliderItem)
                 updateMediaCount()
+                if (!sliderItem.hasSecondaryItem() && config.debugEnabled && transformResults.contains(i)) {
+                    currentToast?.cancel()
+                    currentToast = Toast.makeText(context, transformResults[i], Toast.LENGTH_LONG)
+                    currentToast!!.show()
+                    transformResults.remove(i)
+                }
 
                 if (config.loadMore != null && mPager.currentItem > config.items.size - 10 && !loading) {
                     loading = true
