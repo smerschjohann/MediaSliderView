@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.zeuskartik.mediaslider.DisplayOptions
 import com.zeuskartik.mediaslider.SliderItemViewHolder
+import nl.giejay.mediaslider.transformations.GlideTransformations
 import java.util.EnumSet
 
 class MediaSliderConfiguration : Parcelable {
@@ -13,6 +14,9 @@ class MediaSliderConfiguration : Parcelable {
     val isOnlyUseThumbnails: Boolean
     val isVideoSoundEnable: Boolean
     val animationSpeedMillis: Int
+    val maxCutOffHeight: Int
+    val maxCutOffWidth: Int
+    val glideTransformation: GlideTransformations
 
     constructor(displayOptions: EnumSet<DisplayOptions>?,
                 startPosition: Int,
@@ -22,7 +26,10 @@ class MediaSliderConfiguration : Parcelable {
                 assets: List<SliderItemViewHolder>,
                 loadMore: LoadMore?,
                 onAssetSelected: (SliderItemViewHolder) -> Unit = {},
-                animationSpeedMillis: Int) {
+                animationSpeedMillis: Int,
+                maxCutOffHeight: Int,
+                maxCutOffWidth: Int,
+                transformation: GlideTransformations) {
         this.displayOptions = displayOptions
         this.startPosition = startPosition
         this.interval = interval
@@ -32,6 +39,9 @@ class MediaSliderConfiguration : Parcelable {
         Companion.assets = assets
         Companion.onAssetSelected = onAssetSelected
         this.animationSpeedMillis = animationSpeedMillis
+        this.maxCutOffHeight = maxCutOffHeight
+        this.maxCutOffWidth = maxCutOffWidth
+        this.glideTransformation = transformation
     }
 
     private constructor(`in`: Parcel) {
@@ -41,6 +51,9 @@ class MediaSliderConfiguration : Parcelable {
         isOnlyUseThumbnails = `in`.readByte().toInt() != 0
         isVideoSoundEnable = `in`.readByte().toInt() != 0
         this.animationSpeedMillis = `in`.readInt()
+        this.maxCutOffHeight =  `in`.readInt()
+        this.maxCutOffWidth =  `in`.readInt()
+        this.glideTransformation = GlideTransformations.valueOfSafe(`in`.readString()!!, GlideTransformations.CENTER_INSIDE)
     }
 
     val isClockVisible: Boolean
@@ -92,6 +105,9 @@ class MediaSliderConfiguration : Parcelable {
         dest.writeByte((if (isOnlyUseThumbnails) 1 else 0).toByte())
         dest.writeByte((if (isVideoSoundEnable) 1 else 0).toByte())
         dest.writeInt(animationSpeedMillis)
+        dest.writeInt(maxCutOffHeight)
+        dest.writeInt(maxCutOffWidth)
+        dest.writeString(glideTransformation.toString())
     }
 
     companion object {

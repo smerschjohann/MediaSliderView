@@ -203,8 +203,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
         pagerAdapter = ScreenSlidePagerAdapter(
             context, config.items,
             defaultExoFactory,
-            config.isOnlyUseThumbnails,
-            config.isVideoSoundEnable)
+            config)
 
         try {
             if (config.enableSlideAnimation() && config.animationSpeedMillis > 0) {

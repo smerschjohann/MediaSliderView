@@ -28,8 +28,8 @@ import timber.log.Timber
 class ScreenSlidePagerAdapter(private val context: Context,
                               private var items: List<SliderItemViewHolder>,
                               private val exoFactory: DefaultHttpDataSource.Factory,
-                              private val onlyUseThumbnails: Boolean,
-                              private val isVideoSoundEnable: Boolean) : PagerAdapter() {
+                              private val config: MediaSliderConfiguration,
+    ) : PagerAdapter() {
         private var imageView: TouchImageView? = null
         private val progressBars: MutableMap<Int, ProgressBar> = HashMap()
         private var currentVolume = 0f
@@ -75,7 +75,7 @@ class ScreenSlidePagerAdapter(private val context: Context,
                         .build()
                     ).build()
                 prepareMedia(model.url, player, exoFactory)
-                if (!isVideoSoundEnable) {
+                if (!config.isVideoSoundEnable) {
                     currentVolume = player.volume
                     player.volume = 0f
                 }
@@ -98,15 +98,16 @@ class ScreenSlidePagerAdapter(private val context: Context,
             return view!!
         }
 
-        fun loadImageIntoView(imageRootLayout: View, imageViewResource: Int, position: Int, model: SliderItem) {
+        fun loadImageIntoView(imageRootLayout: View, imageViewResource: Int,
+                              position: Int, model: SliderItem) {
             imageView = imageRootLayout.findViewById(imageViewResource)
             val progressBar = imageRootLayout.findViewById<ProgressBar>(R.id.mProgressBar)
             if (progressBar != null) {
                 progressBars[position] = progressBar
             }
             var glideLoader = Glide.with(context)
-                .load(if (onlyUseThumbnails) model.thumbnailUrl else model.url)
-                .centerInside() //                        .placeholder(context.getResources().getDrawable(R.drawable.images))
+                .load(if (config.isOnlyUseThumbnails) model.thumbnailUrl else model.url)
+                .transform(config.glideTransformation.transform(context, config))
                 .listener(object : RequestListener<Drawable> {
                     override fun onLoadFailed(e: GlideException?, model: Any?, target: com.bumptech.glide.request.target.Target<Drawable>, isFirstResource: Boolean): Boolean {
                         Timber.e(e, "Could not fetch image: %s", model)
@@ -124,7 +125,7 @@ class ScreenSlidePagerAdapter(private val context: Context,
                     }
 
                 })
-            if (!onlyUseThumbnails) {
+            if (!config.isOnlyUseThumbnails) {
                 glideLoader = glideLoader.thumbnail(Glide.with(context)
                     .load(model.thumbnailUrl))
             }
@@ -143,7 +144,7 @@ class ScreenSlidePagerAdapter(private val context: Context,
             val view = `object` as View
             val exoplayer = view.findViewById<PlayerView>(R.id.video_view)
             if (exoplayer != null && exoplayer.player != null) {
-                if (!isVideoSoundEnable) {
+                if (!config.isVideoSoundEnable) {
                     exoplayer.player!!.volume = currentVolume
                     currentVolume = 0f
                 }
