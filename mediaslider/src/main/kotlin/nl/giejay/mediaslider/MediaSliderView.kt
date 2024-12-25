@@ -267,8 +267,8 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 config.onAssetSelected(sliderItem)
                 setItemText(sliderItem)
                 updateMediaCount()
+                currentToast?.cancel()
                 if (!sliderItem.hasSecondaryItem() && config.debugEnabled && transformResults.contains(i)) {
-                    currentToast?.cancel()
                     currentToast = Toast.makeText(context, transformResults[i], Toast.LENGTH_LONG)
                     currentToast!!.show()
                     transformResults.remove(i)
