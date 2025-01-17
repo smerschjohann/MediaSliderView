@@ -97,9 +97,13 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             return super.dispatchKeyEvent(event)
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
-            if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) && config.items[mPager.currentItem].type == SliderItemType.IMAGE) {
+            if (context is MediaSliderListener && (context as MediaSliderListener).onButtonPressed(event)) {
+                return false
+            } else if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) && config.items[mPager.currentItem].type == SliderItemType.IMAGE) {
                 toggleSlideshow(true)
                 return false
+            } else if (config.items[mPager.currentItem].type == SliderItemType.VIDEO) {
+                return super.dispatchKeyEvent(event)
             } else if (slideShowPlaying) {
                 if (event.keyCode != KeyEvent.KEYCODE_DPAD_RIGHT) {
                     toggleSlideshow(true)
@@ -118,7 +122,7 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 return false
             }
         }
-        return false
+        return if (config.items[mPager.currentItem].type == SliderItemType.IMAGE) false else super.dispatchKeyEvent(event)
     }
 
     fun loadMediaSliderView(config: MediaSliderConfiguration) {
