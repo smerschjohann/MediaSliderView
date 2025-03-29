@@ -12,7 +12,7 @@ class MediaSliderConfiguration : Parcelable {
     val startPosition: Int
     val interval: Int
     val isOnlyUseThumbnails: Boolean
-    val isVideoSoundEnable: Boolean
+    var isVideoSoundEnable: Boolean
     val animationSpeedMillis: Int
     val maxCutOffHeight: Int
     val maxCutOffWidth: Int

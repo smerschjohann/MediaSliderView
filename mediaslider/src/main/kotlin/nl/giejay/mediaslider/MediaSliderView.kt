@@ -102,15 +102,15 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             } else if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) && config.items[mPager.currentItem].type == SliderItemType.IMAGE) {
                 toggleSlideshow(true)
                 return false
-            }  else if (config.items[mPager.currentItem].type == SliderItemType.VIDEO) {
-                if(!config.isVideoSoundEnable){
-                    if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                        Toast.makeText(context, "Enabling sound", Toast.LENGTH_SHORT).show()
-                        currentPlayerInScope?.volume = 1F
-                    } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        Toast.makeText(context, "Disabling sound", Toast.LENGTH_SHORT).show()
-                        currentPlayerInScope?.volume = 0F
-                    }
+            } else if (config.items[mPager.currentItem].type == SliderItemType.VIDEO) {
+                if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    Toast.makeText(context, "Enabling sound", Toast.LENGTH_SHORT).show()
+                    currentPlayerInScope?.volume = 1F
+                    config.isVideoSoundEnable = true
+                } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    Toast.makeText(context, "Disabling sound", Toast.LENGTH_SHORT).show()
+                    currentPlayerInScope?.volume = 0F
+                    config.isVideoSoundEnable = false
                 }
                 return super.dispatchKeyEvent(event)
             } else if (slideShowPlaying) {
