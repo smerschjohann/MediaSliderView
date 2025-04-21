@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ProgressBar
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -27,7 +28,7 @@ import timber.log.Timber
 
 class ScreenSlidePagerAdapter(private val context: Context,
                               private var items: List<SliderItemViewHolder>,
-                              private val exoFactory: DefaultHttpDataSource.Factory,
+                              private val exoFactory: HttpDataSource.Factory,
                               private val config: MediaSliderConfiguration,
                               private val transformResult: (String, Int) -> Unit) : PagerAdapter() {
     private var imageView: TouchImageView? = null
