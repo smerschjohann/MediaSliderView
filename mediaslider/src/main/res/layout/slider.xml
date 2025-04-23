@@ -82,17 +82,18 @@
         android:paddingBottom="30dp">
 
         <TextClock
-            android:id="@+id/clock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:elevation="10dp"
-            android:gravity="right"
-            android:paddingRight="100dp"
-            android:textColor="@color/details_text"
-            android:fontFamily="@string/font_family"
-            android:textSize="48sp"
-            android:visibility="gone"
-            />
+                android:id="@+id/clock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:elevation="10dp"
+                android:gravity="right"
+                android:paddingRight="100dp"
+                android:textColor="@color/details_text"
+                android:fontFamily="@string/font_family"
+                android:textSize="96sp"
+                android:visibility="gone"
+                android:format24Hour="kk:mm"
+                android:format12Hour="kk:mm" />
 
         <TextView
             android:id="@+id/title_right"
