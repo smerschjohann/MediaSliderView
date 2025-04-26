@@ -24,6 +24,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import androidx.viewpager.widget.ViewPager
+import com.bumptech.glide.Glide
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import com.zeuskartik.mediaslider.R
@@ -178,10 +179,6 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
             if (config.items[mPager.currentItem].type == SliderItemType.IMAGE) {
                 startTimerNextAsset()
             }
-            if (context is Activity) {
-                // view is being triggered from main app, prevent app going to sleep
-                (context as Activity).window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
         } else {
             clearKeepScreenOnFlags()
             mainHandler.removeCallbacks(goToNextAssetRunnable)
@@ -209,6 +206,14 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
         } else {
             mPager.setCurrentItem(0, config.enableSlideAnimation())
         }
+    }
+
+    private fun zoomAnimateView(imageView: View) {
+        val animator = imageView.animate()
+        animator.duration = 10000
+        animator.scaleX(1.05f)
+        animator.scaleY(1.05f)
+        animator.start()
     }
 
     private fun initViewsAndSetAdapter(listener: Player.Listener) {
@@ -282,6 +287,8 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                 setItemText(sliderItem)
                 updateMediaCount()
                 currentToast?.cancel()
+
+
                 if (!sliderItem.hasSecondaryItem() && config.debugEnabled && transformResults.contains(i)) {
                     currentToast = Toast.makeText(context, transformResults[i], Toast.LENGTH_LONG)
                     currentToast!!.show()
@@ -312,6 +319,22 @@ class MediaSliderView(context: Context) : ConstraintLayout(context) {
                         currentPlayerInScope!!.playWhenReady = true
                     }
                 } else {
+                    val viewTag = mPager.findViewWithTag<View>("view$i") ?: return
+                    val imageView = viewTag.findViewById<View>(R.id.mBigImage)
+                    if (imageView != null) {
+                        zoomAnimateView(imageView)
+                    } else {
+                        val imageViewLeft = viewTag.findViewById<View>(R.id.left_image)
+                        val imageViewRight = viewTag.findViewById<View>(R.id.right_image)
+                        if (imageViewLeft != null) {
+                            zoomAnimateView(imageViewLeft)
+                        }
+                        if (imageViewRight != null) {
+                            zoomAnimateView(imageViewRight)
+                        }
+                    }
+
+
                     if (slideShowPlaying) {
                         startTimerNextAsset()
                     }

@@ -1,5 +1,7 @@
 package nl.giejay.mediaslider
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -60,10 +62,12 @@ class ScreenSlidePagerAdapter(private val context: Context,
         if (model.type == SliderItemType.IMAGE) {
             if (model.hasSecondaryItem()) {
                 view = inflater.inflate(R.layout.image_double_item, container, false)
+                view.tag = "view$position"
                 loadImageIntoView(view, R.id.left_image, position, model.mainItem)
                 loadImageIntoView(view, R.id.right_image, position, model.secondaryItem!!)
             } else {
                 view = inflater.inflate(R.layout.image_item, container, false)
+                view.tag = "view$position"
                 loadImageIntoView(view, R.id.mBigImage, position, model.mainItem)
             }
         } else if (model.type == SliderItemType.VIDEO) {
@@ -159,8 +163,19 @@ class ScreenSlidePagerAdapter(private val context: Context,
             val imageView = view.findViewById<View>(R.id.mBigImage)
             if (imageView != null) {
                 Glide.with(context).clear(imageView)
+            } else {
+                val imageViewLeft = view.findViewById<View>(R.id.left_image)
+                val imageViewRight = view.findViewById<View>(R.id.right_image)
+                if (imageViewLeft != null) {
+                    Glide.with(context).clear(imageViewLeft)
+                }
+                if (imageViewRight != null) {
+                    Glide.with(context).clear(imageViewRight)
+                }
             }
         }
         container.removeView(view)
     }
+
+
 }
